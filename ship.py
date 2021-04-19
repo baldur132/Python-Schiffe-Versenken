@@ -1,17 +1,19 @@
+""" Classes for Battleships """
+
 class Ship:
     """ Parent class for all ships """
-    def __init__(self, position = [0, 0], orientation = True, length):
+    def __init__(self, position = None, orientation = True, length = 5):
         """
         constructor for ships
         :param position: position on board
         :param orientation: direction of ship either vertical(true) or horizontal(false)
         """
-        self.position
-        self.orientation
-        self.length
+        self.position = [0, 0] if position is None else position
+        self.orientation = orientation
+        self.length = length
         self.sunken = False
         self.placed = False
-        
+
     def place(self, pos, orient, ships):
         """
         places ships on board by setting their internal position values and
@@ -33,51 +35,49 @@ class Ship:
             nextpos_y = pos_y + i if orient else pos_y
 
             #loop through all ship objects
-            ships_all = ships[Battleships] + ships[Cruisers] + ships[Destroyers] + ships[Submarines]
+            ships_all = ships["Battleships"] + ships["Cruisers"] + ships["Destroyers"] + ships["Submarines"]
 
-            for e in range(len(ships_all)):
-                if e.placed:
+            for num in range(len(ships_all)):
+                if num.placed:
                     #check for collisions with battleships
-                    if nextpos_x == e.position[0] and nextpos_y == e.position[1]:
+                    if nextpos_x == num.position[0] and nextpos_y == num.position[1]:
                         #head collision with battleship
                         return False
                     if orient:
                         #check for body collisions on vertically oriented ship
-                        if nextpos_x == e.position[0] and nextpos_y < e.position[1] + e.length:
+                        if nextpos_x == num.position[0] and nextpos_y < num.position[1] + num.length:
                             #ship is on top of the body of an already existing ship
                             return False
-                    elif:
+                    else:
                         #check for body collisions on horizontially oriented ship
-                        if nextpos_y == e.position[1] and nextpos_x < e.position[0] + e.length:
+                        if nextpos_y == num.position[1] and nextpos_x < num.position[0] + num.length:
                             #ship intersects with with another differently oriented one
                             return False
-                            
-        
 
 class Battleship(Ship):
     """ Class for Battleship """
-    def __init__(self, position = [0, 0], orientation = True):
-        super().__init__(self, position = [0, 0], orientation = True, 5)
+    def __init__(self, position = None, orientation = True):
+        self.position = [0, 0] if position is None else position
+        super().__init__(position = position, orientation = orientation, length = 5)
         self.length = 5
-
-    def get_hit(self, x, y):
-        pass
 
 class Cruiser(Ship):
     """ Class for Cruiser """
-    def __init__(self, position = [0, 0], orientation = True):
-        super().__init__(self, position = [0, 0], orientation = True, 4)
+    def __init__(self, position = None, orientation = True):
+        self.position = [0, 0] if position is None else position
+        super().__init__(position = position, orientation = orientation, length = 4)
         self.length = 4
 
 class Destroyer(Ship):
     """ Class for Destroyer """
-    def __init__(self, position = [0, 0], orientation = True):
-        super().__init__(self, position = [0, 0], orientation = True, 3)
+    def __init__(self, position = None, orientation = True):
+        self.position = [0, 0] if position is None else position
+        super().__init__(position = position, orientation = orientation, length = 3)
         self.length = 3
 
 class Submarine(Ship):
     """ Class for Submarine """
-    def __init__(self, position = [0, 0], orientation = True):
-        super().__init__(self, position = [0, 0], orientation = True, 2)
+    def __init__(self, position = None, orientation = True):
+        self.position = [0, 0] if position is None else position
+        super().__init__(position = position, orientation = orientation, length = 2)
         self.length = 2
-        
