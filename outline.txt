@@ -1,0 +1,16 @@
+Outline for Battle Ship Game
+----------------------------
+
+Current Class Structure
+Class Game
+  method: 
+
+
+Possible Improvements
+ - Using keyboard module to immediately capture keyboard inputs --> better responsiveness
+ - Create new class for ships, with subclasses for each type --> prevent god class, better organization
+ - Create new class for players, with subclasses for player and computer --> allows expandability
+ - Make the user interface less confusing
+
+Current Issues
+ - Ship placement system is borderline unusable without prior knowledge
