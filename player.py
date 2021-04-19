@@ -83,4 +83,5 @@ class AI(Player):
         """
         method to shoot
         """
+        pass
         
