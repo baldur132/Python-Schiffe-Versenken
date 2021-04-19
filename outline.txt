@@ -34,3 +34,4 @@ Current Issues
  - ship placement is annoying to use, especially with repeated actions/typing
  - in two player mode it's unclear as to which player is currently doing actions (add player label)
  - field placement is clunky, especially as you have to input row and column separately
+ - no feedback if ship is destroyed
