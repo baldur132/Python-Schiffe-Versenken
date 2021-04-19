@@ -3,14 +3,34 @@ Outline for Battle Ship Game
 
 Current Class Structure
 Class Game
-  method: 
+  method: print_battlefield
+  method: print_ships
+  method: place_battleship
+  method: place_cruiser
+  method: place_destroyer
+  method: place_submarine
+  method: place_ships_one
+  method: place_ships_two
+  method: get_shot_one
+  method: get_shot_two
 
+Class Shooting
+  method: print_shooting_range
+  method: shoot
+  method: shooting_ai
+  method: shoot_at_ai
+  method: game_winner
 
 Possible Improvements
  - Using keyboard module to immediately capture keyboard inputs --> better responsiveness
  - Create new class for ships, with subclasses for each type --> prevent god class, better organization
- - Create new class for players, with subclasses for player and computer --> allows expandability
- - Make the user interface less confusing
+ - Create new class for players, with subclasses for player and computer --> allows expandability, improves readability
+ - Make the user interface less confusing/easier and faster to use
+ - Change the storage method of the game board to contain legends, as that should be added in the respective print() functions
+ - Alter/Remove global functions in favor of implementing the functionality in print() and input capture
+ - Merge ai_enemy functions into the players->ai subclasses
 
 Current Issues
- - Ship placement system is borderline unusable without prior knowledge
+ - ship placement is annoying to use, especially with repeated actions/typing
+ - in two player mode it's unclear as to which player is currently doing actions (add player label)
+ - field placement is clunky, especially as you have to input row and column separately
