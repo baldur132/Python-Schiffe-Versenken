@@ -6,9 +6,10 @@ class Player:
     parent class for players
     """
 
-    def __init__(self):
+    def __init__(self, battlefield):
         self.shooting_range = {"e4" : True}
         self.ships = ["Battleships": [], "Cruisers": [], "Destroyers": [], "Submarines": []]
+        self.battlefield = battlefield
 
     def get_shot(self, coord):
         """
@@ -17,7 +18,11 @@ class Player:
         :param x_coord: x-coordinate that is targeted by enemy
         :return: tells if the shot was a hit or miss
         """
-        pass
+        if self.battlefield[coord] != NULL:
+            shot_statement = "x"
+        else:
+            shot_statement = "o"
+        return shot_statement
 
     def translate_column(self, column):
         """
