@@ -14,7 +14,7 @@ class Ship:
         self.sunken = False
         self.placed = False
 
-    def place(self, pos = None, orient = None, ships = None, board_size = 9):
+    def place(self, pos = None, orient = None, ships = None, board_size = 9, test = False):
         """
         places ships on board by setting their internal position values and
         checks placement validity
@@ -32,7 +32,7 @@ class Ship:
 
         if (not orient and pos_x + self.length > board_size) or (orient and pos_y + self.length > board_size):
             #ship overhangs on board
-            return f"board overhang as { pos_x + self.length } and  { pos_y + self.length }"
+            return False #f"board overhang as { pos_x + self.length } and  { pos_y + self.length }"
 
         for i in range(self.length):
             #find next position
@@ -42,27 +42,28 @@ class Ship:
             #loop through all ship objects
             ships_all = ships["Battleships"] + ships["Cruisers"] + ships["Destroyers"] + ships["Submarines"]
 
-            for num, shipper in enumerate(ships_all):
+            for shipper in ships_all:
                 if shipper.placed:
                     #check for collisions with battleships
-                    if nextpos_x == num.position[0] and nextpos_y == num.position[1]:
+                    if nextpos_x == shipper.position[0] and nextpos_y == shipper.position[1]:
                         #head collision with battleship
                         #return False
-                        return f"head collision at { nextpos_x } { nextpos_y }"
+                        return False #f"head collision at { nextpos_x } { nextpos_y }"
                     if orient:
                         #check for body collisions on vertically oriented ship
-                        if nextpos_x == num.position[0] and nextpos_y < num.position[1] + num.length:
+                        if nextpos_x == shipper.position[0] and nextpos_y < shipper.position[1] + shipper.length:
                             #ship is on top of the body of an already existing ship
-                            return f"vertical body collision at { nextpos_x } { nextpos_y }"
+                            return False #f"vertical body collision at { nextpos_x } { nextpos_y }"
                     else:
                         #check for body collisions on horizontially oriented ship
-                        if nextpos_y == num.position[1] and nextpos_x < num.position[0] + num.length:
+                        if nextpos_y == shipper.position[1] and nextpos_x < shipper.position[0] + shipper.length:
                             #ship intersects with with another differently oriented one
-                            return f"Horizontal body collision at { nextpos_x } { nextpos_y }"
+                            return False#f"Horizontal body collision at { nextpos_x } { nextpos_y }"
 
-        self.placed = True
-        self.position = [pos_x, pos_y]
-        self.orientation = orient
+        if not test:
+            self.placed = True
+            self.position = [pos_x, pos_y]
+            self.orientation = orient
         return True
 
 class Battleship(Ship):

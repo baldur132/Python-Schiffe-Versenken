@@ -1,4 +1,6 @@
 """file for players"""
+import os
+import keyboard
 import ship
 
 class Player:
@@ -36,11 +38,11 @@ class Player:
             print(column + "is not part of the battlefield!")
         return x_coordinate
 
-    def print_battlefield(self, mode = "ship"):
+    def print_battlefield(self, mode = "none", overlay = None):
         """
         Prints the player's own ships on the battlefield
         :param mode: print mode ("none", "ship", "markers")
-
+        :param overlay: adds a ship to the print routine, expects array [pos, orient, len, letter, color]
         """
         board_size = 10
 
@@ -51,9 +53,15 @@ class Player:
             for shipper in ships:
                 if shipper.placed:
                     for pos in range(shipper.length):
-                        pos_x = str(shipper.position[0]) if shipper.orientation else str(shipper.position[0] + pos)
-                        pos_y = str(shipper.position[1] + pos) if shipper.orientation else str(shipper.position[1])
+                        pos_x = str(shipper.position[0] + 1) if shipper.orientation else str(shipper.position[0] + pos + 1)
+                        pos_y = str(shipper.position[1] + pos + 1) if shipper.orientation else str(shipper.position[1] + 1)
                         ship_pos[pos_x + pos_y] = shipper.letter
+
+            if not overlay is None:
+                for pos in range(overlay[2]):
+                    pos_x = str(overlay[0][0] + 1) if overlay[1] else str(overlay[0][0] + pos + 1)
+                    pos_y = str(overlay[0][1] + pos + 1) if overlay[1] else str(overlay[0][1] + 1)
+                    ship_pos[pos_x + pos_y] = f"\033[0;{ overlay[4] };40m{ overlay[3] }\033[0;0m"
 
         #iterate through each row
         for numy in range(board_size + 1):
@@ -87,7 +95,7 @@ class Player:
                         else:
                             #same as mode none
                             print("   |", end="")
-            #print final newline
+            #print final newlines
             print("")
 
 class Human(Player):
@@ -103,22 +111,91 @@ class Human(Player):
         print("Where do you want to shoot, captain?")
         #print_shooting_range()
 
+    def draw_place_ships(self, key = None, shipper = None):
+        """
+        callback for input capture from place_ships()
+        :param key: pressed key, controls which direction the ship moves
+        :param ship: ship object to move
+        """
+        if shipper is None:
+            return False
 
-    def place_ships(self):
+        if key == " ":
+            #verify ship place
+            verify = shipper.place(ships = self.ships)
+            if not verify:
+                #retry the placement
+                self.capture_input(shipper)
+        elif not shipper.placed:
+            #increment position of ship according to keypress
+            key_map = {"w" : [0, -1], "a" : [-1, 0], "s" : [0, 1], "d" : [1, 0]}
+            pos = shipper.position
+            if key in key_map:
+                pos_mod = key_map[key]
+                pos[0] += pos_mod[0]
+                pos[1] += pos_mod[1]
+
+            if key == "r":
+                shipper.orientation = not shipper.orientation
+
+            #check if ship collides with others on board and set color
+            valid = shipper.place(ships = self.ships, test = True)
+            color = "37" if valid else "31"
+
+            #clear console
+            os.system('cls' if os.name=='nt' else 'clear')
+            #print board with ship overlay
+            self.print_battlefield(mode = "ship", overlay = [pos, shipper.orientation, shipper.length, shipper.letter, color])
+
+        return True
+
+    def capture_input(self, shipper):
+        """
+        method which captures inputs until space is pressed
+        :param shipper: ship object passed through to draw_place_ships method
+        """
+        keyboard.on_press_key("w", lambda event: self.draw_place_ships("w", shipper))
+        keyboard.on_press_key("a", lambda event: self.draw_place_ships("a", shipper))
+        keyboard.on_press_key("s", lambda event: self.draw_place_ships("s", shipper))
+        keyboard.on_press_key("d", lambda event: self.draw_place_ships("d", shipper))
+        keyboard.on_press_key("r", lambda event: self.draw_place_ships("r", shipper))
+        keyboard.wait(" ")
+        self.draw_place_ships(" ", shipper)
+
+    def place_ships(self, battleships = 1, cruisers = 2, destroyers = 3, submarines = 4):
         """
         enables human player to place ships before a game
+        :param battleships: number of battleships to be created
+        :param cruisers: number of cruisers to be created
+        :param destroyers: number of destroyers to be created
+        :param submarines: number of submarines to be created
         """
-        self.ships["Battleships"][0] = ship.Battleship()
-        self.ships["Battleships"][0].place()
-        for i in range(2):
-            self.ships["Cruisers"][i] = ship.Cruiser()
-            self.ships["Cruisers"][i].place()
-        for i in range(3):
-            self.ships["Destroyers"][i] = ship.Destroyer()
-            self.ships["Destroyers"][i].place()
-        for i in range(4):
-            self.ships["Submarine"][i] = ship.Submarine()
-            self.ships["Submarines"][i].place()
+        #initialize ship objects and ship dict
+        btlshp = [""] * battleships
+        for num in range(battleships):
+            btlshp[num] = ship.Battleship()
+        self.ships["Battleships"] = btlshp
+
+        crsr = [""] * cruisers
+        for num in range(cruisers):
+            crsr[num] = ship.Cruiser()
+        self.ships["Cruisers"] = crsr
+
+        dstr = [""] * destroyers
+        for num in range(destroyers):
+            dstr[num] = ship.Destroyer()
+        self.ships["Destroyers"] = dstr
+
+        subs = [""] * submarines
+        for num in range(submarines):
+            subs[num] = ship.Submarine()
+        self.ships["Submarines"] = subs
+
+        ships_all = btlshp + crsr + dstr + subs
+
+        for num, shipper in enumerate(ships_all):
+            self.draw_place_ships(shipper = shipper)
+            self.capture_input(shipper)
 
 class AI(Player):
     """class for AI player"""
@@ -128,8 +205,8 @@ class AI(Player):
         """
 
 if __name__ == "__main__":
-    testplayer = Player("")
-    testplayer.ships["Battleships"] = [ship.Battleship()]
-    testplayer.ships["Battleships"][0].place([5,4], True, ships=testplayer.ships)
-
+    testplayer = Human("")
+    #testplayer.ships["Battleships"] = [ship.Battleship()]
+    #testplayer.ships["Battleships"][0].place([5,4], True, ships=testplayer.ships)
+    testplayer.place_ships()
     testplayer.print_battlefield("ship")
