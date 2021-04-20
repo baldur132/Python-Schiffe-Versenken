@@ -20,6 +20,43 @@ Class Shooting
   method: shooting_ai
   method: shoot_at_ai
   method: game_winner
+  
+Suggested Class Structure
+Class Game
+  method: print_battlefield
+
+Class Ship
+  attribute: position
+  attribute: orientation
+  attribute: sunken
+  attribute: placed
+  method: place
+  
+    Subclass Battleship
+      fixed attribute: length
+      method: get_hit
+      
+    Subclass Cruiser
+      fixed attribute: length
+      method: get_hit
+      
+    Subclass Destroyer
+      fixed attribute: length
+      method: get_hit
+      
+    Subclass Submarine
+      fixed attribute: length
+      method: get_hit
+    
+    
+Class Player
+    method: get_shot
+  Subclass Human
+      method: shoot
+      method: place_ships
+  Subclass AI
+      method: shoot
+      
 
 Possible Improvements
  - Using keyboard module to immediately capture keyboard inputs --> better responsiveness
@@ -35,3 +72,45 @@ Current Issues
  - in two player mode it's unclear as to which player is currently doing actions (add player label)
  - field placement is clunky, especially as you have to input row and column separately
  - no feedback if ship is destroyed
+ 
+ 
+    | a | b | c | d | e | f | g | h | i | j |
+ 1  |   |   |   |   |   |   |   |   |   |   |
+ 2  |   |   |   |   |   |   |   |   |   |   |
+ 3  |   |   |   |   |   |   |   |   |   |   |
+ 4  |   |   |   |   |   |   |   |   |   |   |
+ 5  |   |   |   |   |   |   |   |   |   |   |
+ 6  |   |   |   |   |   |   |   |   |   |   |
+ 7  |   |   |   |   |   |   |   |   |   |   |
+ 8  |   |   |   |   |   |   |   |   |   |   |
+ 9  |   |   |   |   |   |   |   |   |   |   |
+ 10 |   |   |   |   |   |   |   |   |   |   |
+
+ships:
+
+| [ = = = > |
+ 
+| ^ |
+| H |
+| H |
+| - |
+
+Feld:
+x = 0-9
+y = 0-9
+
+pos = [x, y]
+
+ships = {
+            "Battleships": [object],                      #array containing battleships
+            "Cruisers":    [object, object],              #array containing cruisers
+            "Destroyers":  [object, object, object],      #array containing destoryers
+            "Submarines":  [object, object, object],      #array containing submarines
+        }
+
+shooting_range =    {
+                        "a3" : True     #a3 : col a, row 3 has a hit
+                        "e4" : False    #e4 : col e, row 4 has a miss
+                    }                   #all other values are unknown, only the squares
+                                        #that have been fired upon have a saved value
+

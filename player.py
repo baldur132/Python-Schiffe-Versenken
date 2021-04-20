@@ -36,6 +36,60 @@ class Player:
             print(column + "is not part of the battlefield!")
         return x_coordinate
 
+    def print_battlefield(self, mode = "ship"):
+        """
+        Prints the player's own ships on the battlefield
+        :param mode: print mode ("none", "ship", "markers")
+
+        """
+        board_size = 10
+
+        #get all ship positions
+        if mode == "ship":
+            ships = self.ships["Battleships"] + self.ships["Cruisers"] + self.ships["Destroyers"] + self.ships["Submarines"]
+            ship_pos = {}
+            for shipper in ships:
+                if shipper.placed:
+                    for pos in range(shipper.length):
+                        pos_x = str(shipper.position[0]) if shipper.orientation else str(shipper.position[0] + pos)
+                        pos_y = str(shipper.position[1] + pos) if shipper.orientation else str(shipper.position[1])
+                        ship_pos[pos_x + pos_y] = shipper.letter
+
+        #iterate through each row
+        for numy in range(board_size + 1):
+            #iterate through each column
+            for numx in range(board_size + 1):
+                if numy == 0:
+                    #print top index, avoiding top left blank
+                    if numx == 0:
+                        print("    |", end="")
+                    else:
+                        letter = chr(ord("`") + numx)
+                        print(f" { letter } |", end="")
+                else:
+                    #print left hand index
+                    if numx == 0:
+                        #switch spacing for 2 character numbers
+                        if numy > 9:
+                            print(f" { numy } |", end="")
+                        else:
+                            print(f"  { numy } |", end="")
+                    else:
+                        #print field body
+                        if mode == "ship":
+                            #print player ships
+                            if str(numx) + str(numy) in ship_pos:
+                                print(f" { ship_pos[str(numx) + str(numy)] } |", end="")
+                            else:
+                                print("   |", end="")
+                        elif mode == "markers":
+                            print("   |", end="")
+                        else:
+                            #same as mode none
+                            print("   |", end="")
+            #print final newline
+            print("")
+
 class Human(Player):
     """class for human player"""
     def __init__(self, enemy):
@@ -72,5 +126,10 @@ class AI(Player):
         """
         method to shoot
         """
-        pass
-        
+
+if __name__ == "__main__":
+    testplayer = Player("")
+    testplayer.ships["Battleships"] = [ship.Battleship()]
+    testplayer.ships["Battleships"][0].place([5,4], True, ships=testplayer.ships)
+
+    testplayer.print_battlefield("ship")

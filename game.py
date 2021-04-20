@@ -1,5 +1,6 @@
 """ Primary Game class, ties together the other classes """
 #import ship
+#import player
 
 class Game:
     """ Game class, creates a battleship instance """
