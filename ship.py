@@ -14,7 +14,7 @@ class Ship:
         self.sunken = False
         self.placed = False
 
-    def place(self, pos = None, orient = None, ships = None, board_size = 9, test = False):
+    def place(self, pos = None, orient = None, ships = None, board_size = 10, test = False):
         """
         places ships on board by setting their internal position values and
         checks placement validity
@@ -49,14 +49,14 @@ class Ship:
                         #head collision with battleship
                         #return False
                         return False #f"head collision at { nextpos_x } { nextpos_y }"
-                    if orient:
-                        #check for body collisions on vertically oriented ship
-                        if nextpos_x == shipper.position[0] and nextpos_y < shipper.position[1] + shipper.length:
-                            #ship is on top of the body of an already existing ship
+                    if shipper.orientation:
+                        #check for body collisions on vertically oriented shipper
+                        if nextpos_x == shipper.position[0] and nextpos_y < shipper.position[1] + shipper.length and nextpos_y >= shipper.position[1]:
+                            #ship intersects with another vertically oriented one
                             return False #f"vertical body collision at { nextpos_x } { nextpos_y }"
                     else:
-                        #check for body collisions on horizontially oriented ship
-                        if nextpos_y == shipper.position[1] and nextpos_x < shipper.position[0] + shipper.length:
+                        if nextpos_y == shipper.position[1] and nextpos_x < shipper.position[0] + shipper.length and nextpos_x >= shipper.position[0]:
+                        #check for body collisions on horizontially oriented shipper
                             #ship intersects with with another differently oriented one
                             return False#f"Horizontal body collision at { nextpos_x } { nextpos_y }"
 

@@ -38,13 +38,12 @@ class Player:
             print(column + "is not part of the battlefield!")
         return x_coordinate
 
-    def print_battlefield(self, mode = "none", overlay = None):
+    def print_battlefield(self, mode = "none", overlay = None, board_size = 10):
         """
         Prints the player's own ships on the battlefield
         :param mode: print mode ("none", "ship", "markers")
         :param overlay: adds a ship to the print routine, expects array [pos, orient, len, letter, color]
         """
-        board_size = 10
 
         #get all ship positions
         if mode == "ship":
@@ -134,6 +133,8 @@ class Human(Player):
                 pos_mod = key_map[key]
                 pos[0] += pos_mod[0]
                 pos[1] += pos_mod[1]
+                pos[0] = 0 if pos[0] < 0 else pos[0]
+                pos[1] = 0 if pos[1] < 0 else pos[1]
 
             if key == "r":
                 shipper.orientation = not shipper.orientation
