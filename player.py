@@ -8,10 +8,11 @@ class Player:
     parent class for players
     """
 
-    def __init__(self, battlefield):
+    def __init__(self, battlefield, player_name = "Unnamed Player"):
         self.shooting_range = {}
         self.ships = {"Battleships": [], "Cruisers": [], "Destroyers": [], "Submarines": []}
         self.battlefield = battlefield
+        self.player_name = player_name
 
     def get_shot(self, coord):
         """
@@ -38,11 +39,15 @@ class Player:
             print(column + "is not part of the battlefield!")
         return x_coordinate
 
-    def print_battlefield(self, mode = "none", overlay = None, board_size = 10):
+    def print_battlefield(self, mode = "none", title = None, aside = None, footer = None, overlay = None, board_size = 10):
         """
         Prints the player's own ships on the battlefield
         :param mode: print mode ("none", "ship", "markers")
+        :param title: string, text to be printed above the board
+        :param aside: array of strings to be printed next to the board
+        :param footer: string to be printed at the bottom of the board
         :param overlay: adds a ship to the print routine, expects array [pos, orient, len, letter, color]
+        :param board_size: int, size of the board to be printed
         """
 
         #get all ship positions
@@ -61,6 +66,8 @@ class Player:
                     pos_x = str(overlay[0][0] + 1) if overlay[1] else str(overlay[0][0] + pos + 1)
                     pos_y = str(overlay[0][1] + pos + 1) if overlay[1] else str(overlay[0][1] + 1)
                     ship_pos[pos_x + pos_y] = f"\033[0;{ overlay[4] };40m{ overlay[3] }\033[0;0m"
+
+        print(title + "\n" if title is not None else "", end="")
 
         #iterate through each row
         for numy in range(board_size + 1):
@@ -90,17 +97,26 @@ class Player:
                             else:
                                 print("   |", end="")
                         elif mode == "markers":
-                            print("   |", end="")
+                            #print hit/miss markers on board
+                            if str(numx) + str(numy) in self.shooting_range:
+                                print(f" { self.shooting_range[str(numx) + str(numy)] } |")
+                            else:
+                                print("   |", end="")
                         else:
                             #same as mode none
                             print("   |", end="")
             #print final newlines
-            print("")
+            if aside is not None and numy < len(aside):
+                print(aside[numy])
+            else:
+                print("")
+
+        print(footer + "\n" if footer is not None else "", end="")
 
 class Human(Player):
     """class for human player"""
-    def __init__(self, enemy):
-        super().__init__({})
+    def __init__(self, enemy, player_name = "Unnamed Player"):
+        super().__init__({}, player_name = player_name)
         self.enemy = enemy
 
     def shoot(self):
@@ -146,7 +162,17 @@ class Human(Player):
             #clear console
             os.system('cls' if os.name=='nt' else 'clear')
             #print board with ship overlay
-            self.print_battlefield(mode = "ship", overlay = [pos, shipper.orientation, shipper.length, shipper.letter, color])
+            overlay = [pos, shipper.orientation, shipper.length, shipper.letter, color]
+            helptext = [
+                "",
+                "",
+                "          Ship Placement Control:",
+                "",
+                "             W   R   -   move ship up / rotate ship",
+                "          A  S  D    -   move ship left / down / right",
+                "          [Space]    -   place ship (red ship is not placeable)",
+            ]
+            self.print_battlefield(mode = "ship", title = self.player_name + " - Place Ships", aside = helptext, overlay = overlay)
 
         return True
 
@@ -206,7 +232,7 @@ class AI(Player):
         """
 
 if __name__ == "__main__":
-    testplayer = Human("")
+    testplayer = Human("", player_name = "Player One")
     #testplayer.ships["Battleships"] = [ship.Battleship()]
     #testplayer.ships["Battleships"][0].place([5,4], True, ships=testplayer.ships)
     testplayer.place_ships()
