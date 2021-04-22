@@ -8,11 +8,12 @@ class Player:
     parent class for players
     """
 
-    def __init__(self, battlefield, player_name = "Unnamed Player"):
-        self.shooting_range = {}
+    def __init__(self, battlefield, player_name = "Unnamed Player", board_size = 10):
+        self.shooting_range = {"11" : "\033[0;31;40mx\033[0;0m", "56" : "\033[0;36;40mo\033[0;0m"}
         self.ships = {"Battleships": [], "Cruisers": [], "Destroyers": [], "Submarines": []}
         self.battlefield = battlefield
         self.player_name = player_name
+        self.board_size = board_size
 
     def get_shot(self, coord):
         """
@@ -39,7 +40,30 @@ class Player:
             print(column + "is not part of the battlefield!")
         return x_coordinate
 
-    def print_battlefield(self, mode = "none", title = None, aside = None, footer = None, overlay = None, board_size = 10):
+    def prepare_ships(self, overlay = None):
+        """
+        prepares a dictionary of squares which have a ship, as well as an overlay ship
+        :param overlay: adds a ship to the print routine, expects array [pos, orient, len, letter, color]
+        @return dictionary containing ship letters keyed with their board position
+        """
+        ships = self.ships["Battleships"] + self.ships["Cruisers"] + self.ships["Destroyers"] + self.ships["Submarines"]
+        ship_pos = {}
+        for shipper in ships:
+            if shipper.placed:
+                for pos in range(shipper.length):
+                    pos_x = str(shipper.position[0] + 1) if shipper.orientation else str(shipper.position[0] + pos + 1)
+                    pos_y = str(shipper.position[1] + pos + 1) if shipper.orientation else str(shipper.position[1] + 1)
+                    ship_pos[pos_x + pos_y] = shipper.letter
+
+        if not overlay is None:
+            for pos in range(overlay[2]):
+                pos_x = str(overlay[0][0] + 1) if overlay[1] else str(overlay[0][0] + pos + 1)
+                pos_y = str(overlay[0][1] + pos + 1) if overlay[1] else str(overlay[0][1] + 1)
+                ship_pos[pos_x + pos_y] = f"\033[0;{ overlay[4] };40m{ overlay[3] }\033[0;0m"
+
+        return ship_pos
+
+    def print_battlefield(self, mode = "none", title = None, aside = None, footer = None, overlay = None, cursor = None):
         """
         Prints the player's own ships on the battlefield
         :param mode: print mode ("none", "ship", "markers")
@@ -47,47 +71,27 @@ class Player:
         :param aside: array of strings to be printed next to the board
         :param footer: string to be printed at the bottom of the board
         :param overlay: adds a ship to the print routine, expects array [pos, orient, len, letter, color]
-        :param board_size: int, size of the board to be printed
         """
 
         #get all ship positions
         if mode == "ship":
-            ships = self.ships["Battleships"] + self.ships["Cruisers"] + self.ships["Destroyers"] + self.ships["Submarines"]
-            ship_pos = {}
-            for shipper in ships:
-                if shipper.placed:
-                    for pos in range(shipper.length):
-                        pos_x = str(shipper.position[0] + 1) if shipper.orientation else str(shipper.position[0] + pos + 1)
-                        pos_y = str(shipper.position[1] + pos + 1) if shipper.orientation else str(shipper.position[1] + 1)
-                        ship_pos[pos_x + pos_y] = shipper.letter
-
-            if not overlay is None:
-                for pos in range(overlay[2]):
-                    pos_x = str(overlay[0][0] + 1) if overlay[1] else str(overlay[0][0] + pos + 1)
-                    pos_y = str(overlay[0][1] + pos + 1) if overlay[1] else str(overlay[0][1] + 1)
-                    ship_pos[pos_x + pos_y] = f"\033[0;{ overlay[4] };40m{ overlay[3] }\033[0;0m"
+            ship_pos = self.prepare_ships(overlay = overlay)
 
         print(title + "\n" if title is not None else "", end="")
 
         #iterate through each row
-        for numy in range(board_size + 1):
+        for numy in range(self.board_size + 1):
             #iterate through each column
-            for numx in range(board_size + 1):
+            for numx in range(self.board_size + 1):
                 if numy == 0:
                     #print top index, avoiding top left blank
-                    if numx == 0:
-                        print("    |", end="")
-                    else:
-                        letter = chr(ord("`") + numx)
-                        print(f" { letter } |", end="")
+                    letter = chr(ord("`") + numx)
+                    print("    |" if numx == 0 else f" { letter } |", end="")
                 else:
                     #print left hand index
                     if numx == 0:
                         #switch spacing for 2 character numbers
-                        if numy > 9:
-                            print(f" { numy } |", end="")
-                        else:
-                            print(f"  { numy } |", end="")
+                        print(f" { numy } |" if numy > 9 else f"  { numy } |", end="")
                     else:
                         #print field body
                         if mode == "ship":
@@ -98,10 +102,17 @@ class Player:
                                 print("   |", end="")
                         elif mode == "markers":
                             #print hit/miss markers on board
-                            if str(numx) + str(numy) in self.shooting_range:
-                                print(f" { self.shooting_range[str(numx) + str(numy)] } |")
+                            #draw cursor
+                            if cursor is not None and numx == cursor[0] + 1 and numy == cursor[1] + 1:
+                                if str(numx - 1) + str(numy - 1) in self.shooting_range:
+                                    print(f"[{ self.shooting_range[str(numx - 1) + str(numy - 1)] }]|", end="")
+                                else:
+                                    print("\033[0;32;40m[-]\033[0;0m|", end="")
                             else:
-                                print("   |", end="")
+                                if str(numx - 1) + str(numy - 1) in self.shooting_range:
+                                    print(f" { self.shooting_range[str(numx - 1) + str(numy - 1)] } |", end="")
+                                else:
+                                    print("   |", end="")
                         else:
                             #same as mode none
                             print("   |", end="")
@@ -118,13 +129,65 @@ class Human(Player):
     def __init__(self, enemy, player_name = "Unnamed Player"):
         super().__init__({}, player_name = player_name)
         self.enemy = enemy
+        self.targeting = [0, 0]
 
     def shoot(self):
+        """ method to shoot at the enemy's ships """
+        letter = chr(ord("`") + self.targeting[0] + 1)
+        print(f"Shooting square: { letter }{ self.targeting[1] + 1 }")
+
+    def complete_shoot(self, key = None):
         """
-        method to shoot at the enemy's ships
+        callback for input capture from get_shoot()
+        :param key: string containing pressed key
         """
-        print("Where do you want to shoot, captain?")
-        #print_shooting_range()
+
+        if key == " ":
+            #fire shot at square
+            self.shoot()
+        else:
+            #increment cursor
+            key_map = {"w" : [0, -1], "a" : [-1, 0], "s" : [0, 1], "d" : [1, 0]}
+            if key in key_map:
+                pos_mod = key_map[key]
+                self.targeting[0] += pos_mod[0]
+                self.targeting[1] += pos_mod[1]
+                self.targeting[0] = 0 if self.targeting[0] < 0 else self.targeting[0]
+                self.targeting[1] = 0 if self.targeting[1] < 0 else self.targeting[1]
+                self.targeting[0] = self.board_size - 1 if self.targeting[0] > self.board_size - 1 else self.targeting[0]
+                self.targeting[1] = self.board_size - 1 if self.targeting[1] > self.board_size - 1 else self.targeting[1]
+
+            #clear console
+            os.system('cls' if os.name=='nt' else 'clear')
+            #print battlefield with markers and cursor
+            title = f"\033[1;37;40m{ self.player_name } - Shoot Square\033[0;0m"
+            helptext = [
+                "",
+                "",
+                "          Shooting Cursor Control:",
+                "",
+                "             W       -   move cursor up",
+                "          A  S  D    -   move cursor left / down / right",
+                "          [Space]    -   shoot at square",
+            ]
+            self.print_battlefield(mode = "markers", title = title, aside = helptext, cursor = self.targeting)
+
+        #send backspace to prevent command line getting filled
+        keyboard.send(0x0E)
+
+    def capture_input_shoot(self):
+        """ method which captures inputs for shooting cursor until space is pressed """
+        keyboard.on_press_key("w", lambda event: self.complete_shoot("w"))
+        keyboard.on_press_key("a", lambda event: self.complete_shoot("a"))
+        keyboard.on_press_key("s", lambda event: self.complete_shoot("s"))
+        keyboard.on_press_key("d", lambda event: self.complete_shoot("d"))
+        keyboard.wait(" ")
+        self.complete_shoot(" ")
+
+    def get_shoot(self):
+        """ method to get user requested square to shoot """
+        self.complete_shoot()
+        self.capture_input_shoot()
 
     def draw_place_ships(self, key = None, shipper = None):
         """
@@ -140,7 +203,7 @@ class Human(Player):
             verify = shipper.place(ships = self.ships)
             if not verify:
                 #retry the placement
-                self.capture_input(shipper)
+                self.capture_input_place(shipper)
         elif not shipper.placed:
             #increment position of ship according to keypress
             key_map = {"w" : [0, -1], "a" : [-1, 0], "s" : [0, 1], "d" : [1, 0]}
@@ -151,6 +214,13 @@ class Human(Player):
                 pos[1] += pos_mod[1]
                 pos[0] = 0 if pos[0] < 0 else pos[0]
                 pos[1] = 0 if pos[1] < 0 else pos[1]
+                if shipper.orientation:
+                    pos[0] = self.board_size - 1 if pos[0] > self.board_size - 1 else pos[0]
+                    pos[1] = self.board_size - shipper.length if pos[1] + shipper.length > self.board_size - 1 else pos[1]
+                else:
+                    pos[0] = self.board_size - shipper.length if pos[0] + shipper.length > self.board_size - 1 else pos[0]
+                    pos[1] = self.board_size - 1 if pos[1] > self.board_size - 1 else pos[1]
+
 
             if key == "r":
                 shipper.orientation = not shipper.orientation
@@ -161,7 +231,8 @@ class Human(Player):
 
             #clear console
             os.system('cls' if os.name=='nt' else 'clear')
-            #print board with ship overlay
+            #print board with title, ship overlay, and help text
+            title = f"\033[1;37;40m{ self.player_name } - Place Ships\033[0;0m"
             overlay = [pos, shipper.orientation, shipper.length, shipper.letter, color]
             helptext = [
                 "",
@@ -172,13 +243,15 @@ class Human(Player):
                 "          A  S  D    -   move ship left / down / right",
                 "          [Space]    -   place ship (red ship is not placeable)",
             ]
-            self.print_battlefield(mode = "ship", title = self.player_name + " - Place Ships", aside = helptext, overlay = overlay)
+            self.print_battlefield(mode = "ship", title = title, aside = helptext, overlay = overlay)
 
+        #send backspace to prevent command line getting filled
+        keyboard.send(0x0E)
         return True
 
-    def capture_input(self, shipper):
+    def capture_input_place(self, shipper):
         """
-        method which captures inputs until space is pressed
+        method which captures inputs for ship placement until space is pressed
         :param shipper: ship object passed through to draw_place_ships method
         """
         keyboard.on_press_key("w", lambda event: self.draw_place_ships("w", shipper))
@@ -222,7 +295,7 @@ class Human(Player):
 
         for num, shipper in enumerate(ships_all):
             self.draw_place_ships(shipper = shipper)
-            self.capture_input(shipper)
+            self.capture_input_place(shipper)
 
 class AI(Player):
     """class for AI player"""
@@ -235,5 +308,6 @@ if __name__ == "__main__":
     testplayer = Human("", player_name = "Player One")
     #testplayer.ships["Battleships"] = [ship.Battleship()]
     #testplayer.ships["Battleships"][0].place([5,4], True, ships=testplayer.ships)
-    testplayer.place_ships()
-    testplayer.print_battlefield("ship")
+    #testplayer.place_ships()
+    testplayer.get_shoot()
+    #testplayer.print_battlefield("markers")
