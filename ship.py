@@ -2,25 +2,30 @@
 
 class Ship:
     """ Parent class for all ships """
-    def __init__(self, position = None, orientation = True, length = 5):
+    def __init__(self, position = None, orientation = True, length = 5, letter = "B"):
         """
         constructor for ships
         :param position: position on board
         :param orientation: direction of ship either vertical(true) or horizontal(false)
+        :param length: int defining length of the ship in squares
+        :param letter: char used to print onto the board
         """
         self.position = [0, 0] if position is None else position
         self.orientation = orientation
         self.length = length
+        self.letter = letter
         self.sunken = False
         self.placed = False
 
     def place(self, pos = None, orient = None, ships = None, board_size = 10, test = False):
         """
-        places ships on board by setting their internal position values and
-        checks placement validity
+        places ships on board by setting their internal position values and/or checks placement validity
         :param pos: position to be placed (first square of ship on top or left)
         :param orient: direction of ship either vertical(true) or horizontal(false)
-        :param ships: dict of currently existing ships
+        :param ships: array of currently existing ships
+        :param board_size: int needed to define board bounds to check for validity
+        :param test: bool if true does not place the ship, only returns value
+        @return bool value if true means that the ship is in a valid location on the board
         """
         pos = self.position if pos is None else pos
         orient = self.orientation if orient is None else orient
@@ -40,9 +45,7 @@ class Ship:
             nextpos_y = pos_y + i if orient else pos_y
 
             #loop through all ship objects
-            ships_all = ships["Battleships"] + ships["Cruisers"] + ships["Destroyers"] + ships["Submarines"]
-
-            for shipper in ships_all:
+            for shipper in ships:
                 if shipper.placed:
                     #check for collisions with battleships
                     if nextpos_x == shipper.position[0] and nextpos_y == shipper.position[1]:
@@ -66,35 +69,53 @@ class Ship:
             self.orientation = orient
         return True
 
-class Battleship(Ship):
-    """ Class for Battleship """
-    def __init__(self, position = None, orientation = True):
-        #self.position = [0, 0] if position is None else position
-        super().__init__(position = position, orientation = orientation, length = 5)
-        self.placed = False if position is None else True
-        self.length = 5
-        self.letter = "B"
+    def get_hit(self, pos, markers):
+        """
+        checks if a hit is on itself
+        :param pos: position of hit, expects len 2 array [n, n]
+        @return bool when true, hit is successful when false, hit is not on ship
+        """
+        hit = False
+        if self.placed and not self.sunken:
+            if pos[0] == self.position[0] and pos[1] == self.position[1]:
+                #hit position is on head
+                hit = True
+            else:
+                if self.orientation:
+                    #check for hit on vertically oriented body
+                    if pos[0] == self.position[0] and pos[1] < self.position[1] + self.length and pos[1] >= self.position[1]:
+                        #hit on body
+                        hit = True
+                else:
+                    #check for hit on horizontally oriented body
+                    if pos[1] == self.position[1] and pos[0] < self.position[0] + self.length and pos[0] >= self.position[0]:
+                        #hit on bldy
+                        hit = True
 
-class Cruiser(Ship):
-    """ Class for Cruiser """
-    def __init__(self, position = None, orientation = True):
-        super().__init__(position = position, orientation = orientation, length = 4)
-        self.placed = False if position is None else True
-        self.length = 4
-        self.letter = "C"
+        if hit:
+            hits = 0
+            #check if ship is sunken
+            for num in range(self.length):
+                if self.orientation:
+                    #cycle through vertical positions (inc y)
+                    if not str(self.position[0]) + str(self.position[1] + num) in markers:
+                        #hit marker does not exist at position, can assume that ship is not sunken
+                        break
+                    else:
+                        hits = hits + 1
+                else:
+                    #cycle through horizontal positions (inc x)
+                    if not str(self.position[0] + num) + str(self.position[1]) in markers:
+                        #hit marker does not exist at position, can assume that the ship is not sunken
+                        break
+                    else:
+                        hits = hits + 1
 
-class Destroyer(Ship):
-    """ Class for Destroyer """
-    def __init__(self, position = None, orientation = True):
-        super().__init__(position = position, orientation = orientation, length = 3)
-        self.placed = False if position is None else True
-        self.length = 3
-        self.letter = "D"
+            if hits == self.length:
+                #because there are as many hits as ship squares, the ship must be sunken
+                self.sunken = True
 
-class Submarine(Ship):
-    """ Class for Submarine """
-    def __init__(self, position = None, orientation = True):
-        super().__init__(position = position, orientation = orientation, length = 2)
-        self.placed = False if position is None else True
-        self.length = 2
-        self.letter = "S"
+            #return true because ship has been hit
+            return True
+
+        return False

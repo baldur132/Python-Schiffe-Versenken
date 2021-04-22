@@ -9,36 +9,40 @@ class Player:
     """
 
     def __init__(self, battlefield, player_name = "Unnamed Player", board_size = 10):
-        self.shooting_range = {"11" : "\033[0;31;40mx\033[0;0m", "56" : "\033[0;36;40mo\033[0;0m"}
-        self.ships = {"Battleships": [], "Cruisers": [], "Destroyers": [], "Submarines": []}
+        #allow ansi escape codes
+        os.system("color")
+        self.shooting_range = {}
+        self.ships = []
         self.battlefield = battlefield
         self.player_name = player_name
         self.board_size = board_size
 
     def get_shot(self, coord):
         """
-        notices if one of player's ships got hit
-        :param y_coord: y-coordinate that is targeted by enemy
-        :param x_coord: x-coordinate that is targeted by enemy
-        :return: tells if the shot was a hit or miss
+        checks if a certain coordinate is populated and if the hit results in a sink
+        :param coord
+        @return string contains "hit", "miss", "sink"
         """
-        if self.battlefield[coord] is not None:
-            shot_statement = "x"
-        else:
-            shot_statement = "o"
-        return shot_statement
+        for shipper in self.ships:
+            if shipper.get_hit(coord, self.shooting_range):
+                #ship has been successfully hit
+                if shipper.sunken:
+                    #ship has been sunken
+                    return "sink"
+                else:
+                    #return hit
+                    return "hit"
+        #no hit registered, can assume miss
+        return "miss"
 
-    def translate_column(self, column):
+    def captive_space(self, message = "- Press [space] To Continue ", hide_name = False):
         """
-        translates letter for columns to numbers
-        :param column: the letter to be translated
-        :return: translation of the letter
+        holds the player captive until spacebar is pressed
+        :param message: string message to be displayed while player is held captive
+        :param hide_name: bool if true does not print player name before message
         """
-        x_coordinate = 0
-        x_coordinate = (ord(column.lower()) - 96) + 1
-        if x_coordinate < 2 or x_coordinate > 11:
-            print(column + "is not part of the battlefield!")
-        return x_coordinate
+        print(f"{ self.player_name }{ message if not hide_name else '' }")
+        keyboard.wait(" ")
 
     def prepare_ships(self, overlay = None):
         """
@@ -46,9 +50,8 @@ class Player:
         :param overlay: adds a ship to the print routine, expects array [pos, orient, len, letter, color]
         @return dictionary containing ship letters keyed with their board position
         """
-        ships = self.ships["Battleships"] + self.ships["Cruisers"] + self.ships["Destroyers"] + self.ships["Submarines"]
         ship_pos = {}
-        for shipper in ships:
+        for shipper in self.ships:
             if shipper.placed:
                 for pos in range(shipper.length):
                     pos_x = str(shipper.position[0] + 1) if shipper.orientation else str(shipper.position[0] + pos + 1)
@@ -59,7 +62,7 @@ class Player:
             for pos in range(overlay[2]):
                 pos_x = str(overlay[0][0] + 1) if overlay[1] else str(overlay[0][0] + pos + 1)
                 pos_y = str(overlay[0][1] + pos + 1) if overlay[1] else str(overlay[0][1] + 1)
-                ship_pos[pos_x + pos_y] = f"\033[0;{ overlay[4] };40m{ overlay[3] }\033[0;0m"
+                ship_pos[pos_x + pos_y] = f"\033[0;{ overlay[4] }m{ overlay[3] }\033[0;0m"
 
         return ship_pos
 
@@ -72,6 +75,9 @@ class Player:
         :param footer: string to be printed at the bottom of the board
         :param overlay: adds a ship to the print routine, expects array [pos, orient, len, letter, color]
         """
+
+        #clear console
+        os.system('cls' if os.name=='nt' else 'clear')
 
         #get all ship positions
         if mode == "ship":
@@ -107,7 +113,7 @@ class Player:
                                 if str(numx - 1) + str(numy - 1) in self.shooting_range:
                                     print(f"[{ self.shooting_range[str(numx - 1) + str(numy - 1)] }]|", end="")
                                 else:
-                                    print("\033[0;32;40m[-]\033[0;0m|", end="")
+                                    print("\033[0;32m[-]\033[0;0m|", end="")
                             else:
                                 if str(numx - 1) + str(numy - 1) in self.shooting_range:
                                     print(f" { self.shooting_range[str(numx - 1) + str(numy - 1)] } |", end="")
@@ -126,15 +132,22 @@ class Player:
 
 class Human(Player):
     """class for human player"""
-    def __init__(self, enemy, player_name = "Unnamed Player"):
+    def __init__(self, target, player_name = "Unnamed Player"):
         super().__init__({}, player_name = player_name)
-        self.enemy = enemy
+        self.target = target
         self.targeting = [0, 0]
 
     def shoot(self):
         """ method to shoot at the enemy's ships """
-        letter = chr(ord("`") + self.targeting[0] + 1)
-        print(f"Shooting square: { letter }{ self.targeting[1] + 1 }")
+        #letter = chr(ord("`") + self.targeting[0] + 1)
+        #print(f"Shooting square: { letter }{ self.targeting[1] + 1 }")
+        value = self.target.get_shot(self.targeting)
+        if value == "hit":
+            self.shooting_range[str(self.targeting[0]) + str(self.targeting[1])] = "\033[0;31mx\033[0;0m"
+        elif value == "sink":
+            self.shooting_range[str(self.targeting[0]) + str(self.targeting[1])] = "\033[0;31mx\033[0;0m"
+        elif value == "miss":
+            self.shooting_range[str(self.targeting[0]) + str(self.targeting[1])] = "\033[0;36mo\033[0;0m"
 
     def complete_shoot(self, key = None):
         """
@@ -157,10 +170,8 @@ class Human(Player):
                 self.targeting[0] = self.board_size - 1 if self.targeting[0] > self.board_size - 1 else self.targeting[0]
                 self.targeting[1] = self.board_size - 1 if self.targeting[1] > self.board_size - 1 else self.targeting[1]
 
-            #clear console
-            os.system('cls' if os.name=='nt' else 'clear')
             #print battlefield with markers and cursor
-            title = f"\033[1;37;40m{ self.player_name } - Shoot Square\033[0;0m"
+            title = f"\033[1;37m{ self.player_name } - Shoot Square\033[0;0m"
             helptext = [
                 "",
                 "",
@@ -182,6 +193,7 @@ class Human(Player):
         keyboard.on_press_key("s", lambda event: self.complete_shoot("s"))
         keyboard.on_press_key("d", lambda event: self.complete_shoot("d"))
         keyboard.wait(" ")
+        keyboard.unhook_all()
         self.complete_shoot(" ")
 
     def get_shoot(self):
@@ -229,10 +241,8 @@ class Human(Player):
             valid = shipper.place(ships = self.ships, test = True)
             color = "37" if valid else "31"
 
-            #clear console
-            os.system('cls' if os.name=='nt' else 'clear')
             #print board with title, ship overlay, and help text
-            title = f"\033[1;37;40m{ self.player_name } - Place Ships\033[0;0m"
+            title = f"\033[1;37m{ self.player_name } - Place Ships\033[0;0m"
             overlay = [pos, shipper.orientation, shipper.length, shipper.letter, color]
             helptext = [
                 "",
@@ -260,6 +270,7 @@ class Human(Player):
         keyboard.on_press_key("d", lambda event: self.draw_place_ships("d", shipper))
         keyboard.on_press_key("r", lambda event: self.draw_place_ships("r", shipper))
         keyboard.wait(" ")
+        keyboard.unhook_all()
         self.draw_place_ships(" ", shipper)
 
     def place_ships(self, battleships = 1, cruisers = 2, destroyers = 3, submarines = 4):
@@ -270,30 +281,26 @@ class Human(Player):
         :param destroyers: number of destroyers to be created
         :param submarines: number of submarines to be created
         """
-        #initialize ship objects and ship dict
-        btlshp = [""] * battleships
-        for num in range(battleships):
-            btlshp[num] = ship.Battleship()
-        self.ships["Battleships"] = btlshp
+        #initialize ship objects and ship array
+        count = 0
+        self.ships = [""] * (battleships + cruisers + destroyers + submarines)
+        for _ in range(battleships):
+            self.ships[count] = ship.Ship(length = 5, letter = "B")
+            count = count + 1
 
-        crsr = [""] * cruisers
-        for num in range(cruisers):
-            crsr[num] = ship.Cruiser()
-        self.ships["Cruisers"] = crsr
+        for _ in range(cruisers):
+            self.ships[count] = ship.Ship(length = 4, letter = "C")
+            count = count + 1
 
-        dstr = [""] * destroyers
-        for num in range(destroyers):
-            dstr[num] = ship.Destroyer()
-        self.ships["Destroyers"] = dstr
+        for _ in range(destroyers):
+            self.ships[count] = ship.Ship(length = 3, letter = "D")
+            count = count + 1
 
-        subs = [""] * submarines
-        for num in range(submarines):
-            subs[num] = ship.Submarine()
-        self.ships["Submarines"] = subs
+        for _ in range(submarines):
+            self.ships[count] = ship.Ship(length = 2, letter="S")
+            count = count + 1
 
-        ships_all = btlshp + crsr + dstr + subs
-
-        for num, shipper in enumerate(ships_all):
+        for _, shipper in enumerate(self.ships):
             self.draw_place_ships(shipper = shipper)
             self.capture_input_place(shipper)
 
@@ -305,9 +312,17 @@ class AI(Player):
         """
 
 if __name__ == "__main__":
+    testtarget = Human("", player_name = "Cannon Fodder")
     testplayer = Human("", player_name = "Player One")
+    testplayer.target = testtarget
     #testplayer.ships["Battleships"] = [ship.Battleship()]
     #testplayer.ships["Battleships"][0].place([5,4], True, ships=testplayer.ships)
-    #testplayer.place_ships()
-    testplayer.get_shoot()
-    #testplayer.print_battlefield("markers")
+    testtarget.place_ships()
+
+    while True:
+        try:
+            testplayer.get_shoot()
+            testplayer.print_battlefield(mode = "markers")
+            testplayer.captive_space()
+        except KeyboardInterrupt:
+            quit()
