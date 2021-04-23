@@ -1,5 +1,6 @@
 """file for players"""
 import os
+import random
 import keyboard
 import ship
 
@@ -8,41 +9,62 @@ class Player:
     parent class for players
     """
 
-    def __init__(self, battlefield, player_name = "Unnamed Player", board_size = 10):
+    def __init__(self, player_name = "Unnamed Player", board_size = 10):
         #allow ansi escape codes
         os.system("color")
         self.shooting_range = {}
         self.ships = []
-        self.battlefield = battlefield
         self.player_name = player_name
         self.board_size = board_size
 
-    def get_shot(self, coord):
+    def check_sunken(self):
+        """
+        checks if all ships are sunken
+        @return bool if true, all ships are sunken and player has lost
+        """
+        sunken = 0
+        for shipper in self.ships:
+            if shipper.sunken:
+                sunken = sunken + 1
+
+        if sunken >= len(self.ships):
+            #all ships have been sunken
+            return True
+        return False
+
+    def get_shot(self, coord, markers):
         """
         checks if a certain coordinate is populated and if the hit results in a sink
-        :param coord
-        @return string contains "hit", "miss", "sink"
+        :param coord location of hit
+        @return string contains "hit", "miss", "sink", "lost"
         """
         for shipper in self.ships:
-            if shipper.get_hit(coord, self.shooting_range):
+            if shipper.get_hit(coord, markers):
                 #ship has been successfully hit
                 if shipper.sunken:
+                    #check if all ships have been sunken
+                    if self.check_sunken():
+                        return "lost"
                     #ship has been sunken
                     return "sink"
-                else:
-                    #return hit
-                    return "hit"
+                #return hit
+                return "hit"
         #no hit registered, can assume miss
         return "miss"
 
-    def captive_space(self, message = "- Press [space] To Continue ", hide_name = False):
+    def captive_space(self, message = "- Press [space] To Continue ", hide_name = False, clear_console = False):
         """
         holds the player captive until spacebar is pressed
         :param message: string message to be displayed while player is held captive
         :param hide_name: bool if true does not print player name before message
         """
+        if clear_console:
+            os.system('cls' if os.name=='nt' else 'clear')
+
         print(f"{ self.player_name }{ message if not hide_name else '' }")
         keyboard.wait(" ")
+        keyboard.unhook_all()
+        keyboard.press(0x0E)
 
     def prepare_ships(self, overlay = None):
         """
@@ -132,22 +154,31 @@ class Player:
 
 class Human(Player):
     """class for human player"""
-    def __init__(self, target, player_name = "Unnamed Player"):
-        super().__init__({}, player_name = player_name)
-        self.target = target
+    def __init__(self, player_name = "Unnamed Player", board_size = 10):
+        super().__init__(player_name = player_name, board_size = board_size)
+        self.human = True
+        self.target = Player()
         self.targeting = [0, 0]
+        self.last_hit = ""
 
-    def shoot(self):
-        """ method to shoot at the enemy's ships """
-        #letter = chr(ord("`") + self.targeting[0] + 1)
-        #print(f"Shooting square: { letter }{ self.targeting[1] + 1 }")
-        value = self.target.get_shot(self.targeting)
-        if value == "hit":
-            self.shooting_range[str(self.targeting[0]) + str(self.targeting[1])] = "\033[0;31mx\033[0;0m"
-        elif value == "sink":
-            self.shooting_range[str(self.targeting[0]) + str(self.targeting[1])] = "\033[0;31mx\033[0;0m"
-        elif value == "miss":
-            self.shooting_range[str(self.targeting[0]) + str(self.targeting[1])] = "\033[0;36mo\033[0;0m"
+    def shoot(self, empty_call = True):
+        """
+        method to shoot at the enemy's ships
+        @return string value of hit
+        """
+        if empty_call:
+            #allows easy usage of player.shoot() method
+            self.get_shoot()
+            value = self.last_hit
+        else:
+            value = self.target.get_shot(self.targeting, self.shooting_range)
+            if value == "miss":
+                self.shooting_range[str(self.targeting[0]) + str(self.targeting[1])] = "\033[0;36mo\033[0;0m"
+            elif value in ("hit", "sink", "lost"):
+                self.shooting_range[str(self.targeting[0]) + str(self.targeting[1])] = "\033[0;31mx\033[0;0m"
+
+            self.last_hit = value
+        return value
 
     def complete_shoot(self, key = None):
         """
@@ -157,7 +188,7 @@ class Human(Player):
 
         if key == " ":
             #fire shot at square
-            self.shoot()
+            self.last_hit = self.shoot(empty_call = False)
         else:
             #increment cursor
             key_map = {"w" : [0, -1], "a" : [-1, 0], "s" : [0, 1], "d" : [1, 0]}
@@ -198,6 +229,7 @@ class Human(Player):
 
     def get_shoot(self):
         """ method to get user requested square to shoot """
+        self.last_hit = ""
         self.complete_shoot()
         self.capture_input_shoot()
 
@@ -212,7 +244,7 @@ class Human(Player):
 
         if key == " ":
             #verify ship place
-            verify = shipper.place(ships = self.ships)
+            verify = shipper.place(ships = self.ships, board_size = self.board_size)
             if not verify:
                 #retry the placement
                 self.capture_input_place(shipper)
@@ -306,14 +338,66 @@ class Human(Player):
 
 class AI(Player):
     """class for AI player"""
+    def __init__(self, player_name = "Unnamed Computer", board_size = 10):
+        super().__init__(player_name = player_name, board_size = board_size)
+        self.human = False
+        self.target = Player()
+        self.targeting = [0, 0]
+
     def shoot(self):
         """
-        method to shoot
+        method to shoot, randomly chooses squares to shoot
+        @return string value of hit
         """
+        #randomize shooting location
+        while str(self.targeting[0]) + str(self.targeting[1]) in self.shooting_range:
+            self.targeting = [random.randint(0, self.board_size - 1), random.randint(0, self.board_size - 1)]
+
+        value = self.target.get_shot(self.targeting, self.shooting_range)
+        if value == "miss":
+            self.shooting_range[str(self.targeting[0]) + str(self.targeting[1])] = "\033[0;36mo\033[0;0m"
+        elif value in ("hit", "sink", "lost"):
+            self.shooting_range[str(self.targeting[0]) + str(self.targeting[1])] = "\033[0;31mx\033[0;0m"
+
+        return value
+
+    def place_ships(self, battleships = 1, cruisers = 2, destroyers = 3, submarines = 4):
+        """
+        method places ships randomly, following placement rules
+        :param battleships: number of battleships to be created
+        :param cruisers: number of cruisers to be created
+        :param destroyers: number of destroyers to be created
+        :param submarines: number of submarines to be created
+        """
+        #initialize ship objects and ship array
+        count = 0
+        self.ships = [""] * (battleships + cruisers + destroyers + submarines)
+        for _ in range(battleships):
+            self.ships[count] = ship.Ship(length = 5, letter = "B")
+            count = count + 1
+
+        for _ in range(cruisers):
+            self.ships[count] = ship.Ship(length = 4, letter = "C")
+            count = count + 1
+
+        for _ in range(destroyers):
+            self.ships[count] = ship.Ship(length = 3, letter = "D")
+            count = count + 1
+
+        for _ in range(submarines):
+            self.ships[count] = ship.Ship(length = 2, letter="S")
+            count = count + 1
+
+        for _, shipper in enumerate(self.ships):
+            value = False
+            while not value:
+                pos = [random.randint(0, self.board_size - 1), random.randint(0, self.board_size - 1)]
+                orient = bool(random.getrandbits(1))
+                value = shipper.place(pos = pos, orient = orient, ships = self.ships, board_size = self.board_size)
 
 if __name__ == "__main__":
-    testtarget = Human("", player_name = "Cannon Fodder")
-    testplayer = Human("", player_name = "Player One")
+    testtarget = Human(player_name = "Cannon Fodder")
+    testplayer = Human(player_name = "Player One")
     testplayer.target = testtarget
     #testplayer.ships["Battleships"] = [ship.Battleship()]
     #testplayer.ships["Battleships"][0].place([5,4], True, ships=testplayer.ships)

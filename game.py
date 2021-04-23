@@ -2,7 +2,7 @@
 import os
 import keyboard
 #import ship
-#import player
+import player
 
 class Game:
     """ Game class, creates a battleship instance """
@@ -13,7 +13,7 @@ class Game:
         """
         #allow ansi escape codes
         os.system("color")
-        self.players_num = 0
+        self.players = []
         self.selection_pointer = 0
 
         #image assets
@@ -29,6 +29,43 @@ class Game:
         ]
         self.select_box_head = r" .──────────────────────────────────────────────────────"
         self.select_box_foot = r"──────────────────────────────────────────────────────' "
+
+    def build_options(self, padding, options):
+        """
+        builds string out of given options and padding parameters
+        :param padding: int number of spaces per item to pad with
+        :param options: array of strings containing the options
+        @return string with distributed padding
+        """
+        item_num = len(options)
+        options_string = ""
+        if not padding % 2:
+            # distribute to each string
+            pad = " " * (padding // 2)
+            #pad individual strings
+            for num, option in enumerate(options):
+                if num == self.selection_pointer:
+                    options_string += pad + "\033[1;37m\033[4;37m" + option + "\033[0;0m\033[0;0m" + pad + " | "
+                else:
+                    options_string += pad + option + pad + " | "
+            #cut off last separator
+            options_string = options_string[:-3]
+        else:
+            # portion is odd. subtract one from each portion and use to pad
+            unused = item_num
+            pad = " " * ((padding - 1) // 2)
+            #pad inividual options
+            for num, option in enumerate(options):
+                if num == self.selection_pointer:
+                    options_string += pad + "\033[1;37m\033[4;37m" + option + "\033[0;0m\033[0;0m" + pad + " | "
+                else:
+                    options_string += pad + option + pad + " | "
+            #cut off last separator
+            options_string = options_string[:-3]
+            #pad ends of options string
+            options_string = (" " * (unused // 2)) + options_string + (" " * ((unused // 2 + 1) if unused % 2 else (unused // 2)))
+
+        return options_string
 
     def draw_selection(self, key = None, box_options = None, title = False):
         """
@@ -50,9 +87,7 @@ class Game:
             # calculate formatting
             max_fillable = 54
             item_count = len(box_options)
-            sep_count = item_count - 1
-            sep_space = sep_count * 3
-            tot_internal_len = sep_space
+            tot_internal_len = (item_count - 1) * 3
             for string in box_options:
                 tot_internal_len += len(string)
             #sanity check
@@ -61,46 +96,20 @@ class Game:
                 return False
 
             #set incrementation direction
-            direction = False if key == "a" else True
-            direction = True if key == "d" else False
+            direction = not key == "a"
+            direction = (key == "d")
             #increment internal pointer
             self.selection_pointer = self.selection_pointer + 1 if direction else self.selection_pointer - 1
             #bound selection pointer between 0 and options
             self.selection_pointer = 0 if self.selection_pointer < 0 else self.selection_pointer
-            self.selection_pointer = sep_count if self.selection_pointer > sep_count else self.selection_pointer
+            self.selection_pointer = item_count - 1 if self.selection_pointer > item_count - 1 else self.selection_pointer
 
             #calculate and apply margins
             extra = max_fillable - tot_internal_len
             options_string = r""
             if not extra % item_count:
                 #distribute equally if each string gets an even number of spaces
-                portion = extra // item_count
-                if not portion % 2:
-                    # distribute to each string
-                    pad = " " * (portion // 2)
-                    #pad individual strings
-                    for num, option in enumerate(box_options):
-                        if num == self.selection_pointer:
-                            options_string += pad + "\033[1;37m\033[4;37m" + option + "\033[0;0m\033[0;0m" + pad + " | "
-                        else:
-                            options_string += pad + option + pad + " | "
-                    #cut off last separator
-                    options_string = options_string[:-3]
-                else:
-                    # portion is odd. subtract one from each portion and use to pad
-                    unused = item_count
-                    pad = " " * ((portion - 1) // 2)
-                    #pad inividual options
-                    for num, option in enumerate(box_options):
-                        if num == self.selection_pointer:
-                            options_string += pad + "\033[1;37m\033[4;37m" + option + "\033[0;0m\033[0;0m" + pad + " | "
-                        else:
-                            options_string += pad + option + pad + " | "
-                    #cut off last separator
-                    options_string = options_string[:-3]
-                    #pad ends of options string
-                    options_string = (" " * (unused // 2)) + options_string + (" " * ((unused // 2 + 1) if unused % 2 else (unused // 2)))
-
+                options_string = self.build_options(extra // item_count, box_options)
                 #add stoppers
                 options_string = "/" + options_string + "/"
             else:
@@ -108,35 +117,9 @@ class Game:
                     #distribute extra values normally, then pad edges with rest
                     distributable = extra - extra % item_count
                     excess = extra - distributable
-                    portion = distributable // item_count
-                    if not portion % 2:
-                        # distribute to each string
-                        pad = " " * (portion // 2)
-                        #pad individual strings
-                        for num, option in enumerate(box_options):
-                            if num == self.selection_pointer:
-                                options_string += pad + "\033[1;37m\033[4;37m" + option + "\033[0;0m\033[0;0m" + pad + " | "
-                            else:
-                                options_string += pad + option + pad + " | "
-                        #cut off last separator
-                        options_string = options_string[:-3]
-                    else:
-                        # portion is odd. subtract one from each portion and use to pad
-                        unused = item_count
-                        pad = " " * ((portion - 1) // 2)
-                        #pad inividual options
-                        for num, option in enumerate(box_options):
-                            if num == self.selection_pointer:
-                                options_string += pad + "\033[1;37m\033[4;37m" + option + "\033[0;0m\033[0;0m" + pad + " | "
-                            else:
-                                options_string += pad + option + pad + " | "
-                        #cut off last separator
-                        options_string = options_string[:-3]
-                        #pad ends of options string
-                        options_string = (" " * (unused // 2)) + options_string + (" " * ((unused // 2 + 1) if unused % 2 else (unused // 2)))
+                    options_string = self.build_options(distributable // item_count, box_options)
                     #add excess
                     options_string = (" " * (excess // 2)) + options_string + (" " * ((excess // 2 + 1) if excess % 2 else (excess // 2)))
-
                     #add stoppers
                     options_string = "/" + options_string + "/"
                 else:
@@ -178,7 +161,57 @@ class Game:
         self.draw_selection(box_options = ["Start New Game", "Resume Game", "Quit"], title = True)
         self.capture_input_select(box = ["Start New Game", "Resume Game", "Quit"], title = True)
 
+    def start_game(self, player_count = 1, board_size = 10):
+        """
+        starts battleship game
+        :param player_count: int number of players
+        :param board_size: int size of board (side length)
+        """
+        if player_count == 1:
+            # singleplayer game
+            #initialize players
+            plyrs = [
+                player.Human(player_name = "Human Player", board_size = board_size),
+                player.AI(player_name = "Computer Player", board_size = board_size)
+            ]
+            self.players = plyrs
+            #set targets
+            self.players[0].target = self.players[1]
+            self.players[1].target = self.players[0]
+
+            #pregame setup
+            for user in self.players:
+                user.place_ships(battleships = 0, cruisers = 0, destroyers = 1, submarines = 0)
+
+            #run game
+            play = True
+            while play:
+                for user in self.players:
+                    value = user.shoot()
+                    if value == "lost":
+                        #game has hit end condition
+                        winner = user
+                        play = False
+                        break
+                    if user.human:
+                        if value == "miss":
+                            #print miss screen
+                            print("miss")
+                            user.captive_space()
+                        elif value == "hit":
+                            #print hit screen
+                            print("hit")
+                            user.captive_space()
+                        elif value == "sunk":
+                            #print sunk screen
+                            print("sunk")
+                            user.captive_space()
+
+            #finish game
+            print(f"game has ended, { winner.player_name } has won")
+
 if __name__ == "__main__":
     newgame = Game()
-    #newgame.move_selection(box_options = ["Ente", "bente", "lamente", "quack", "quark"])
-    newgame.display_titlecard()
+    #newgame.draw_selection(box_options = ["Ente", "quack", "quark"])
+    newgame.start_game()
+    #newgame.display_titlecard()

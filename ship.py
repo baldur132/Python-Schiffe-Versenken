@@ -98,18 +98,18 @@ class Ship:
             for num in range(self.length):
                 if self.orientation:
                     #cycle through vertical positions (inc y)
-                    if not str(self.position[0]) + str(self.position[1] + num) in markers:
+                    pos_str = str(self.position[0]) + str(self.position[1] + num)
+                    if not pos_str in markers and pos_str != str(pos[0]) + str(pos[1]):
                         #hit marker does not exist at position, can assume that ship is not sunken
                         break
-                    else:
-                        hits = hits + 1
+                    hits = hits + 1
                 else:
                     #cycle through horizontal positions (inc x)
-                    if not str(self.position[0] + num) + str(self.position[1]) in markers:
+                    pos_str = str(self.position[0] + num) + str(self.position[1])
+                    if not pos_str in markers and pos_str != str(pos[0]) + str(pos[1]):
                         #hit marker does not exist at position, can assume that the ship is not sunken
                         break
-                    else:
-                        hits = hits + 1
+                    hits = hits + 1
 
             if hits == self.length:
                 #because there are as many hits as ship squares, the ship must be sunken
