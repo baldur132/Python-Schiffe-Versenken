@@ -61,7 +61,7 @@ class Player:
         if clear_console:
             os.system('cls' if os.name=='nt' else 'clear')
 
-        print(f"{ self.player_name }{ message if not hide_name else '' }")
+        print(f"{ self.player_name if not hide_name else '' }{ message }")
         keyboard.wait(" ")
         keyboard.unhook_all()
         keyboard.press(0x0E)
@@ -168,7 +168,9 @@ class Human(Player):
         """
         if empty_call:
             #allows easy usage of player.shoot() method
-            self.get_shoot()
+            self.last_hit = ""
+            self.complete_shoot()
+            self.capture_input_shoot()
             value = self.last_hit
         else:
             value = self.target.get_shot(self.targeting, self.shooting_range)
@@ -182,7 +184,7 @@ class Human(Player):
 
     def complete_shoot(self, key = None):
         """
-        callback for input capture from get_shoot()
+        callback for input capture from input capture of shoot
         :param key: string containing pressed key
         """
 
@@ -226,12 +228,6 @@ class Human(Player):
         keyboard.wait(" ")
         keyboard.unhook_all()
         self.complete_shoot(" ")
-
-    def get_shoot(self):
-        """ method to get user requested square to shoot """
-        self.last_hit = ""
-        self.complete_shoot()
-        self.capture_input_shoot()
 
     def draw_place_ships(self, key = None, shipper = None):
         """
@@ -405,7 +401,7 @@ if __name__ == "__main__":
 
     while True:
         try:
-            testplayer.get_shoot()
+            testplayer.shoot()
             testplayer.print_battlefield(mode = "markers")
             testplayer.captive_space()
         except KeyboardInterrupt:
