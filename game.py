@@ -15,6 +15,7 @@ class Game:
         os.system("color")
         self.players = []
         self.selection_pointer = 0
+        self.selection_callbacks = []
 
         #image assets
         self.title = [
@@ -26,6 +27,61 @@ class Game:
             r"      /_____/\__,_/\__/\__/_/\___/____/_/ /_/_/ .___/   / ",
             r"                                             /_/       /  ",
             r"   ───────────────────────────────────────────────────'   ",
+        ]
+        self.endcard = [
+            r"     .────────────────────────────────────────────────────── ",
+            r"    /   ______                        ____                   ",
+            r"   /   / ____/___ _____ ___  ___     / __ \_   _____  _____  ",
+            r"  /   / / __/ __ `/ __ `__ \/ _ \   / / / / | / / _ \/ ___/  ",
+            r"     / /_/ / /_/ / / / / / /  __/  / /_/ /| |/ /  __/ /     /",
+            r"     \____/\__,_/_/ /_/ /_/\___/   \____/ |___/\___/_/     / ",
+            r"                                                          /  ",
+            r"   ──────────────────────────────────────────────────────'   ",
+        ]
+        self.hit = [
+            r"    _   _   _____   _____            |__                   --_--              ",
+            r"   │ │ │ │ │_   _│ │_   _│           |\/                (  -_    _).          ",
+            r"   │ └ ┘ │  _│ │_    │ │             ---              ( ~       )   )         ",
+            r"   │_│ │_│ │_____│   │_│             / | [          (( )  (    )  ()  )       ",
+            r"                              !      | |||           (.   )) (       )        ",
+            r"                            _/|     _/|-++'            ``..     ..``          ",
+            r"                        +  +--|    |--|--|_ |-              | |               ",
+            r"                     { /|__|  |/\__|  |--- |||__/         (=| |=)             ",
+            r"                    +---------------___[}-_===_.'____       | |       /\      ",
+            r"                ____`-' ||___-{]_| _[}-  |     |_[___\==(../( )\.))   \/   _  ",
+            r" __..._____--==/___]_|__|_____________________________[___\==--____,------' .7",
+            r"|                                                                     BB-61/  ",
+            r" \_________________________________________________________________________|  "
+        ]
+        self.sink = [
+            r"    ____   _____   _    _   _  __                                             ",
+            r"   /  __/ │_   _│ │  \ │ │ │ │/ /                                             ",
+            r"   \_ \     │ │   │   \│ │ │   /                                              ",
+            r"   \____/ │_____│ │_|\___│ │_│\_\        (  .      )                          ",
+            r"                                    (    .   )    )                           ",
+            r"                               .  '   .   '  .  '  .                          ",
+            r"       .      '            (    , )       (.   )  (   ',   ')                 ",
+            r"       )  . (`     '`  .' )    ( . )    ,  ( ,     )   ( .         .      '   ",
+            r"      ((  (  ;)    '  )''  ). ,( .   (  ) ( , ')  .' (  ,    )    )  . (`     ",
+            r"  _' )_') (. _..( '. (_,) . ), ) _) _,')  (, ) '. )  ,. (' )  _.. ((  (  ;)   ",
+            r" __..._____--==/___]_|__|_____________________________[___\==--____,------' .7",
+            r"|                                                                     BB-61/  ",
+            r" \_________________________________________________________________________|  "
+        ]
+        self.miss = [
+            r"    _   _   _____   ____   ____      |__                                      ",
+            r"   │ \ / │ │_   _│ /  __/ /  __/     |\/                                      ",
+            r"   │  ^  │   │ │   \_ \   \_ \       ---                                      ",
+            r"   │_│ │_│ │_____│ \____/ \____/     / | [                                    ",
+            r"                                     | |||                                    ",
+            r"                            _/|     _/|-++'                                   ",
+            r"                        +  +--|    |--|--|_ |-                                ",
+            r"                     { /|__|  |/\__|  |--- |||__/                             ",
+            r"                    +---------------___[}-_===_.'____                 /\      ",
+            r"                ____`-' ||___-{]_| _[}-  |     |_[___\==--            \/   _  ",
+            r" __..._____--==/___]_|__|_____________________________[___\==--____,------' .7",
+            r"|                                                                     BB-61/  ",
+            r" \_________________________________________________________________________|  "
         ]
         self.select_box_head = r" .──────────────────────────────────────────────────────"
         self.select_box_foot = r"──────────────────────────────────────────────────────' "
@@ -67,7 +123,7 @@ class Game:
 
         return options_string
 
-    def draw_selection(self, key = None, box_options = None, title = False):
+    def draw_selection(self, key = None, box_options = None, title = False, endcard = False):
         """
         prints the given box with the current selection underlined
         :param key: string containing pressed movement key
@@ -82,7 +138,7 @@ class Game:
 
         if key == " ":
             #confirm selection
-            pass
+            self.select_option()
         else:
             # calculate formatting
             max_fillable = 54
@@ -135,33 +191,93 @@ class Game:
             if title:
                 for line in self.title:
                     print(line.center(width))
+            #print endcard
+            if endcard:
+                for line in self.endcard:
+                    print(line.center(width))
 
             #print selection box
             print(self.select_box_head.center(width))
-            print((" " * (width // 2 - (len(options_string) - 24) // 2 + 1)) + options_string)
+            print((" " * (width // 2 - (len(options_string) - 24) // 2 + (2 if width % 2 else 1))) + options_string)
             print(self.select_box_foot.center(width))
 
         #send backspace to prevent command line getting filled
         keyboard.send(0x0E)
         return True
 
-    def capture_input_select(self, box, title):
+    def capture_input_select(self, box, title = False, endcard = False):
         """
         responsible for menu input captures
         :param box: specifies the box options to be passed to callback
         """
-        keyboard.on_press_key("a", lambda e : self.draw_selection(key = "a", box_options = box, title = title))
-        keyboard.on_press_key("d", lambda e : self.draw_selection(key = "d", box_options = box, title = title))
+        keyboard.on_press_key("a", lambda e : self.draw_selection("a", box, title, endcard))
+        keyboard.on_press_key("d", lambda e : self.draw_selection("d", box, title, endcard))
         keyboard.wait(" ")
         keyboard.unhook_all()
         self.draw_selection(key = " ", box_options = box)
 
+
+    def select_option(self):
+        """ selects option based off of internal selection values """
+        self.selection_callbacks[self.selection_pointer]()
+
+    def display_gameoptions(self):
+        """ prints selectable game options """
+        self.selection_pointer = 0
+        self.selection_callbacks = [self.start_singleplayer, self.start_multiplayer, self.display_titlecard]
+        self.draw_selection(box_options = ["Singleplayer", "1v1 Multiplayer", "Back"], title = True)
+        self.capture_input_select(box = ["Singleplayer", "1v1 Multiplayer", "Back"], title = True)
+
     def display_titlecard(self):
-        """ responsible for printing title card """
+        """ responsible for printing title card and start options"""
+        self.selection_callbacks = [self.display_gameoptions, "", quit]
         self.draw_selection(box_options = ["Start New Game", "Resume Game", "Quit"], title = True)
         self.capture_input_select(box = ["Start New Game", "Resume Game", "Quit"], title = True)
 
-    def start_game(self, player_count = 1, board_size = 10):
+    def display_endcard(self):
+        """ responsible for printing end card and end options """
+        self.selection_callbacks = [self.display_gameoptions, quit]
+        self.draw_selection(box_options = ["Start New Game", "Quit"], endcard = True)
+        self.capture_input_select(["Start New Game", "Quit"], endcard = True)
+
+
+    def interpret_shot(self, value, user):
+        """
+        displays message according to value
+        :param value: string expecting miss|hit|sunk|lost
+        """
+        width = os.get_terminal_size().columns
+        #clear console
+        os.system('cls' if os.name=='nt' else 'clear')
+
+        if not value == "lost" and user.human:
+            if value == "hit":
+                #print hit message
+                for line in self.hit:
+                    print(line.center(width))
+                print()
+                print(f"{ user.player_name } has hit a ship! - Press [space] To Continue".center(width))
+                user.captive_space(message = "", hide_name = True)
+            elif value == "sink":
+                #print sunk message
+                for line in self.sink:
+                    print(line.center(width))
+                print()
+                print(f"{ user.player_name } has sunk a ship! - Press [space] To Continue".center(width))
+                user.captive_space(message = "", hide_name = True)
+            elif value == "miss":
+                #print miss message
+                for line in self.miss:
+                    print(line.center(width))
+                print()
+                print(f"{ user.player_name } has missed - Press [space] To Continue".center(width))
+                user.captive_space(message = "", hide_name = True)
+        elif value == "lost":
+            #end game
+            user.captive_space("has won")
+            self.display_endcard()
+
+    def run_game(self, player_count = 1, board_size = 10):
         """
         starts battleship game
         :param player_count: int number of players
@@ -181,37 +297,54 @@ class Game:
 
             #pregame setup
             for user in self.players:
-                user.place_ships(battleships = 0, cruisers = 0, destroyers = 1, submarines = 0)
+                user.place_ships(battleships = 1, cruisers = 0, destroyers = 1, submarines = 0)
 
             #run game
             play = True
             while play:
                 for user in self.players:
                     value = user.shoot()
-                    if value == "lost":
-                        #game has hit end condition
-                        winner = user
-                        play = False
-                        break
-                    if user.human:
-                        if value == "miss":
-                            #print miss screen
-                            print("miss")
-                            user.captive_space()
-                        elif value == "hit":
-                            #print hit screen
-                            print("hit")
-                            user.captive_space()
-                        elif value == "sunk":
-                            #print sunk screen
-                            print("sunk")
-                            user.captive_space()
+                    self.interpret_shot(value, user)
+        else:
+            # multiplayer game
+            #initialize players
+            plyrs = [""] * player_count
+            for num in range(player_count):
+                plyrs[num] = player.Human(player_name = f"Player { num + 1 }", board_size = board_size)
+            self.players = plyrs
 
-            #finish game
-            print(f"game has ended, { winner.player_name } has won")
+            #set targets
+            for num, user in enumerate(self.players):
+                if num + 1 == len(self.players):
+                    user.target = self.players[0]
+                else:
+                    user.target = self.players[num + 1]
+
+            #pregame setup
+            for user in self.players:
+                user.place_ships(battleships = 1, cruisers = 0, destroyers = 1, submarines = 0)
+
+            #run game
+            play = True
+            while play:
+                for user in self.players:
+                    value = user.shoot()
+                    self.interpret_shot(value, user)
+
+    def start_singleplayer(self):
+        """ Starts Singleplayer game against computer """
+        self.run_game()
+
+    def start_multiplayer(self):
+        """ Starts 1v1 multiplayer game """
+        self.run_game(player_count = 2)
+
+    def start(self):
+        """ Alias for display_titlecard, starts game menu """
+        self.display_titlecard()
 
 if __name__ == "__main__":
     newgame = Game()
-    #newgame.draw_selection(box_options = ["Ente", "quack", "quark"])
-    newgame.start_game()
-    #newgame.display_titlecard()
+    #newgame.capture_input_select(["Ente", "quack"], False)
+    #newgame.start_game()
+    newgame.display_titlecard()
