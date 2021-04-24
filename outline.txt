@@ -114,3 +114,8 @@ shooting_range =    {
                     }                   #all other values are unknown, only the squares
                                         #that have been fired upon have a saved value
 
+Missing Features
+ - Display Player's own ships when firing
+ - Allow custom player names
+ - Add custom game modes
+ - 
