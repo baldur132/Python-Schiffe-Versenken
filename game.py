@@ -1,10 +1,22 @@
 """ Primary Game class, ties together the other classes """
 import os
-#import sys
+import sys
 import keyboard
 #import ship
 import player
 
+def captive_space(message = " Press [space] To Continue ", clear_console = False):
+    """
+    holds the player captive until spacebar is pressed
+    :param message: string message to be displayed while player is held captive
+    :param hide_name: bool if true does not print player name before message
+    """
+    if clear_console:
+        player.clear_console()
+
+    print(message)
+    keyboard.wait(" ")
+    keyboard.press(0x0E)
 class Game:
     """ Game class, creates a battleship instance """
     def __init__(self):
@@ -17,7 +29,6 @@ class Game:
         self.players = []
         self.selection_pointer = 0
         self.selection_callbacks = []
-        self.paused = False
 
         #image assets
         self.title = [
@@ -30,7 +41,7 @@ class Game:
             r"                                             /_/       /  ",
             r"   ───────────────────────────────────────────────────'   ",
         ]
-        self.endcard = [
+        self.end = [
             r"     .────────────────────────────────────────────────────── ",
             r"    /   ______                        ____                   ",
             r"   /   / ____/___ _____ ___  ___     / __ \_   _____  _____  ",
@@ -135,18 +146,20 @@ class Game:
 
         return options_string
 
-    def draw_selection(self, key = None, box_options = None, title = False, endcard = False, pause = False):
+    def draw_selection(self, key = None, box_options = None, card = None, hint = None):
         """
         prints the given box with the current selection underlined
         :param key: string containing pressed movement key
         :param box_options: array containing the box options to be printed
+        :param card: string containing the card to be printed, expects "title", "end", "pause"
+        :param hint: string to be printed at the bottom of the menu, as a hint
         @return bool true if box fill is successful
         """
         if box_options is None:
             return False
 
         #clear console
-        os.system('cls' if os.name=='nt' else 'clear')
+        player.clear_console()
 
         if key == " ":
             #confirm selection
@@ -200,17 +213,9 @@ class Game:
             #print centered
             width = os.get_terminal_size().columns
 
-            #print title
-            if title:
-                for line in self.title:
-                    print(line.center(width))
-            #print endcard
-            if endcard:
-                for line in self.endcard:
-                    print(line.center(width))
-            #print pause screen
-            if pause:
-                for line in self.pause:
+            #print card
+            if card:
+                for line in getattr(self, card, self.title):
                     print(line.center(width))
 
             #print selection box
@@ -218,34 +223,25 @@ class Game:
             print((" " * (width // 2 - (len(options_string) - 24) // 2 + (2 if width % 2 else 1))) + options_string)
             print(self.select_box_foot.center(width))
 
+            if hint:
+                print(hint.center(width))
+
         #send backspace to prevent command line getting filled
         keyboard.send(0x0E)
         return True
 
-    def capture_input_select(self, box, title = False, endcard = False, pause = False):
+    def capture_input_select(self, box, card):
         """
         responsible for menu input captures
         :param box: specifies the box options to be passed to callback
         """
-        key_a = keyboard.on_press_key("a", lambda e : self.draw_selection("a", box, title, endcard, pause))
-        key_d = keyboard.on_press_key("d", lambda e : self.draw_selection("d", box, title, endcard, pause))
+        key_a = keyboard.on_press_key("a", lambda e : self.draw_selection("a", box, card))
+        key_d = keyboard.on_press_key("d", lambda e : self.draw_selection("d", box, card))
         keyboard.wait(" ")
         keyboard.unhook_key(key_a)
         keyboard.unhook_key(key_d)
         self.draw_selection(key = " ", box_options = box)
 
-    def captive_space(self, message = " Press [space] To Continue ", clear_console = False):
-        """
-        holds the player captive until spacebar is pressed
-        :param message: string message to be displayed while player is held captive
-        :param hide_name: bool if true does not print player name before message
-        """
-        if clear_console:
-            os.system('cls' if os.name=='nt' else 'clear')
-
-        print(message)
-        keyboard.wait(" ")
-        keyboard.press(0x0E)
 
     def capture_pause(self, key = None):
         """ sets up hotkeys to capture key events even during keyboard.wait() """
@@ -257,15 +253,15 @@ class Game:
             keyboard.add_hotkey("p", self.display_pause)
         else:
             #run event
-            if self.paused:
-                if key == "1":
-                    self.selection_pointer = 0
-                elif key == "2":
-                    self.selection_pointer = 1
-                elif key == "3":
-                    self.selection_pointer = 2
+            if key == "1":
+                self.selection_pointer = 0
+            elif key == "2":
+                self.selection_pointer = 1
+            elif key == "3":
+                self.selection_pointer = 2
 
-                self.draw_selection(box_options = ["[1]Resume", "[2]Save and Exit", "[3]Abandon Game"], pause = True)
+            self.draw_selection(box_options = ["[1]Resume", "[2]Save and Exit", "[3]Abandon Game"], card = "pause")
+            keyboard.send(0x0E)
 
         return False
 
@@ -277,33 +273,36 @@ class Game:
 
     def display_pause(self):
         """ dispay pause menu, to allow for saving and exiting game """
-        if not self.paused:
-            self.paused = True
-            self.draw_selection(box_options = ["[1]Resume", "[2]Save and Exit", "[3]Abandon Game"], pause = True)
-        else:
-            self.paused = False
-
-        keyboard.press(0x0E)
+        self.draw_selection(box_options = ["[1]Resume", "[2]Save and Exit", "[3]Abandon Game"], card = "pause")
 
     def display_gameoptions(self):
         """ prints selectable game options """
         self.selection_pointer = 0
         self.selection_callbacks = [self.start_singleplayer, self.start_multiplayer, self.display_titlecard]
-        self.draw_selection(box_options = ["Singleplayer", "1v1 Multiplayer", "Back"], title = True)
-        self.capture_input_select(box = ["Singleplayer", "1v1 Multiplayer", "Back"], title = True)
+        options = ["Singleplayer", "1v1 Multiplayer", "Back"]
+        self.draw_selection(box_options = options, card = "title")
+        self.capture_input_select(box = options, card = "title")
 
     def display_titlecard(self):
         """ responsible for printing title card and start options"""
         self.selection_callbacks = [self.display_gameoptions, "", quit]
-        self.draw_selection(box_options = ["Start New Game", "Resume Game", "Quit"], title = True)
-        self.capture_input_select(box = ["Start New Game", "Resume Game", "Quit"], title = True)
+        options = ["Start New Game", "Resume Game", "Quit"]
+        hint = "Use [a] and [d] to move left and right, [space] to select"
+        self.draw_selection(box_options = options, card = "title", hint = hint)
+        self.capture_input_select(box = options, card = "title")
 
     def display_endcard(self):
         """ responsible for printing end card and end options """
         self.selection_callbacks = [self.display_gameoptions, quit]
-        self.draw_selection(box_options = ["Start New Game", "Quit"], endcard = True)
-        self.capture_input_select(["Start New Game", "Quit"], endcard = True)
+        self.draw_selection(box_options = ["Start New Game", "Quit"], card = "end")
+        self.capture_input_select(["Start New Game", "Quit"], card = "end")
 
+
+    def save_game(self):
+        """ Saves the game state in a json encoded file """
+        player.clear_console()
+        print("game saved")
+        sys.exit()
 
     def interpret_shot(self, value, user):
         """
@@ -321,24 +320,24 @@ class Game:
                     print(line.center(width))
                 print()
                 print(f"{ user.player_name } has hit a ship! - Press [space] To Continue".center(width))
-                self.captive_space(message = "")
+                captive_space(message = "")
             elif value == "sink":
                 #print sunk message
                 for line in self.sink:
                     print(line.center(width))
                 print()
                 print(f"{ user.player_name } has sunk a ship! - Press [space] To Continue".center(width))
-                self.captive_space(message = "")
+                captive_space(message = "")
             elif value == "miss":
                 #print miss message
                 for line in self.miss:
                     print(line.center(width))
                 print()
                 print(f"{ user.player_name } has missed - Press [space] To Continue".center(width))
-                self.captive_space(message = "")
+                captive_space(message = "")
         elif value == "lost":
             #end game
-            self.captive_space(f"{ user.player_name } has won")
+            captive_space(f"{ user.player_name } has won")
             self.display_endcard()
 
     def run_game(self, player_count = 1, board_size = 10):
@@ -370,6 +369,10 @@ class Game:
             play = True
             while play:
                 for user in self.players:
+                    if user.save_exit:
+                        self.save_game()
+                        break
+
                     value = user.shoot()
                     self.interpret_shot(value, user)
                     if value == "lost":
@@ -397,6 +400,10 @@ class Game:
             play = True
             while play:
                 for user in self.players:
+                    if user.save_exit:
+                        self.save_game()
+                        break
+
                     value = user.shoot()
                     self.interpret_shot(value, user)
                     if value == "lost":
