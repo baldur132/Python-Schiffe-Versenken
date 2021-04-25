@@ -38,7 +38,24 @@ class MyTestCase(TestCase):
         self.cruiser.length = 1
         self.cruiser.placed = True
         self.assertEqual(self.player_object.prepare_ships(), {'33': 'B', '43': 'C'})
-
+    
+    def test_print_battlefield(self):
+        expected_battlefield = """    | a | b | c | d | e | f | g | h | i | j |
+  1 |   |   |   |   |   |   |   |   |   |   |
+  2 |   |   |   |   |   |   |   |   |   |   |
+  3 |   |   |   |   |   |   |   |   |   |   |
+  4 |   |   |   |   |   |   |   |   |   |   |
+  5 |   |   |   |   |   |   |   |   |   |   |
+  6 |   |   |   |   |   |   |   |   |   |   |
+  7 |   |   |   |   |   |   |   |   |   |   |
+  8 |   |   |   |   |   |   |   |   |   |   |
+  9 |   |   |   |   |   |   |   |   |   |   |
+ 10 |   |   |   |   |   |   |   |   |   |   |
+"""
+        with patch('sys.stdout', new=StringIO()) as fake_out:
+            self.player_object.print_battlefield(mode="none")
+            self.assertEqual(fake_out.getvalue(), expected_battlefield)
+    
     def test_human_shoot(self):
         self.assertEqual(self.human_object.shoot(), "miss")
 
