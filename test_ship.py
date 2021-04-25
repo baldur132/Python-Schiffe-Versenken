@@ -1,4 +1,4 @@
-# pylint: disabled
+# pylint: skip-file
 from unittest import TestCase
 import ship
 
