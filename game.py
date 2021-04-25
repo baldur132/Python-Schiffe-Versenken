@@ -1,5 +1,6 @@
 """ Primary Game class, ties together the other classes """
 import os
+#import sys
 import keyboard
 #import ship
 import player
@@ -16,6 +17,7 @@ class Game:
         self.players = []
         self.selection_pointer = 0
         self.selection_callbacks = []
+        self.paused = False
 
         #image assets
         self.title = [
@@ -37,6 +39,16 @@ class Game:
             r"     \____/\__,_/_/ /_/ /_/\___/   \____/ |___/\___/_/     / ",
             r"                                                          /  ",
             r"   ──────────────────────────────────────────────────────'   ",
+        ]
+        self.pause = [
+            r"     .───────────────────────────────────── ",
+            r"    /   ____                            __  ",
+            r"   /   / __ \____ ___  __________  ____/ /  ",
+            r"  /   / /_/ / __ `/ / / / ___/ _ \/ __  /   ",
+            r"     / ____/ /_/ / /_/ (__  )  __/ /_/ /   /",
+            r"    /_/    \__,_/\__,_/____/\___/\__,_/   / ",
+            r"                                         /  ",
+            r"   ─────────────────────────────────────'   ",
         ]
         self.hit = [
             r"    _   _   _____   _____            |__                   --_--              ",
@@ -123,7 +135,7 @@ class Game:
 
         return options_string
 
-    def draw_selection(self, key = None, box_options = None, title = False, endcard = False):
+    def draw_selection(self, key = None, box_options = None, title = False, endcard = False, pause = False):
         """
         prints the given box with the current selection underlined
         :param key: string containing pressed movement key
@@ -152,10 +164,11 @@ class Game:
                 return False
 
             #set incrementation direction
-            direction = not key == "a"
-            direction = (key == "d")
-            #increment internal pointer
-            self.selection_pointer = self.selection_pointer + 1 if direction else self.selection_pointer - 1
+            if key in ("a", "d"):
+                direction = not key == "a"
+                direction = (key == "d")
+                #increment internal pointer
+                self.selection_pointer = self.selection_pointer + 1 if direction else self.selection_pointer - 1
             #bound selection pointer between 0 and options
             self.selection_pointer = 0 if self.selection_pointer < 0 else self.selection_pointer
             self.selection_pointer = item_count - 1 if self.selection_pointer > item_count - 1 else self.selection_pointer
@@ -195,6 +208,10 @@ class Game:
             if endcard:
                 for line in self.endcard:
                     print(line.center(width))
+            #print pause screen
+            if pause:
+                for line in self.pause:
+                    print(line.center(width))
 
             #print selection box
             print(self.select_box_head.center(width))
@@ -205,21 +222,68 @@ class Game:
         keyboard.send(0x0E)
         return True
 
-    def capture_input_select(self, box, title = False, endcard = False):
+    def capture_input_select(self, box, title = False, endcard = False, pause = False):
         """
         responsible for menu input captures
         :param box: specifies the box options to be passed to callback
         """
-        keyboard.on_press_key("a", lambda e : self.draw_selection("a", box, title, endcard))
-        keyboard.on_press_key("d", lambda e : self.draw_selection("d", box, title, endcard))
+        key_a = keyboard.on_press_key("a", lambda e : self.draw_selection("a", box, title, endcard, pause))
+        key_d = keyboard.on_press_key("d", lambda e : self.draw_selection("d", box, title, endcard, pause))
         keyboard.wait(" ")
-        keyboard.unhook_all()
+        keyboard.unhook_key(key_a)
+        keyboard.unhook_key(key_d)
         self.draw_selection(key = " ", box_options = box)
+
+    def captive_space(self, message = " Press [space] To Continue ", clear_console = False):
+        """
+        holds the player captive until spacebar is pressed
+        :param message: string message to be displayed while player is held captive
+        :param hide_name: bool if true does not print player name before message
+        """
+        if clear_console:
+            os.system('cls' if os.name=='nt' else 'clear')
+
+        print(message)
+        keyboard.wait(" ")
+        keyboard.press(0x0E)
+
+    def capture_pause(self, key = None):
+        """ sets up hotkeys to capture key events even during keyboard.wait() """
+        if key is None:
+            #set up hotkeys
+            keyboard.add_hotkey("1", self.capture_pause, args = ["1"])
+            keyboard.add_hotkey("2", self.capture_pause, args = ["2"])
+            keyboard.add_hotkey("3", self.capture_pause, args = ["3"])
+            keyboard.add_hotkey("p", self.display_pause)
+        else:
+            #run event
+            if self.paused:
+                if key == "1":
+                    self.selection_pointer = 0
+                elif key == "2":
+                    self.selection_pointer = 1
+                elif key == "3":
+                    self.selection_pointer = 2
+
+                self.draw_selection(box_options = ["[1]Resume", "[2]Save and Exit", "[3]Abandon Game"], pause = True)
+
+        return False
 
 
     def select_option(self):
         """ selects option based off of internal selection values """
-        self.selection_callbacks[self.selection_pointer]()
+        if self.selection_callbacks[self.selection_pointer] is not False:
+            self.selection_callbacks[self.selection_pointer]()
+
+    def display_pause(self):
+        """ dispay pause menu, to allow for saving and exiting game """
+        if not self.paused:
+            self.paused = True
+            self.draw_selection(box_options = ["[1]Resume", "[2]Save and Exit", "[3]Abandon Game"], pause = True)
+        else:
+            self.paused = False
+
+        keyboard.press(0x0E)
 
     def display_gameoptions(self):
         """ prints selectable game options """
@@ -257,24 +321,24 @@ class Game:
                     print(line.center(width))
                 print()
                 print(f"{ user.player_name } has hit a ship! - Press [space] To Continue".center(width))
-                user.captive_space(message = "", hide_name = True)
+                self.captive_space(message = "")
             elif value == "sink":
                 #print sunk message
                 for line in self.sink:
                     print(line.center(width))
                 print()
                 print(f"{ user.player_name } has sunk a ship! - Press [space] To Continue".center(width))
-                user.captive_space(message = "", hide_name = True)
+                self.captive_space(message = "")
             elif value == "miss":
                 #print miss message
                 for line in self.miss:
                     print(line.center(width))
                 print()
                 print(f"{ user.player_name } has missed - Press [space] To Continue".center(width))
-                user.captive_space(message = "", hide_name = True)
+                self.captive_space(message = "")
         elif value == "lost":
             #end game
-            user.captive_space("has won")
+            self.captive_space(f"{ user.player_name } has won")
             self.display_endcard()
 
     def run_game(self, player_count = 1, board_size = 10):
@@ -283,6 +347,9 @@ class Game:
         :param player_count: int number of players
         :param board_size: int size of board (side length)
         """
+        #set up pause
+        self.capture_pause()
+
         if player_count == 1:
             # singleplayer game
             #initialize players
@@ -305,6 +372,8 @@ class Game:
                 for user in self.players:
                     value = user.shoot()
                     self.interpret_shot(value, user)
+                    if value == "lost":
+                        break
         else:
             # multiplayer game
             #initialize players
@@ -330,6 +399,8 @@ class Game:
                 for user in self.players:
                     value = user.shoot()
                     self.interpret_shot(value, user)
+                    if value == "lost":
+                        break
 
     def start_singleplayer(self):
         """ Starts Singleplayer game against computer """
@@ -345,6 +416,6 @@ class Game:
 
 if __name__ == "__main__":
     newgame = Game()
-    #newgame.capture_input_select(["Ente", "quack"], False)
+    #newgame.draw_selection(box_options = ["Ente", "quack"])
     #newgame.start_game()
     newgame.display_titlecard()

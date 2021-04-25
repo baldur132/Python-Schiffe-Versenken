@@ -1,8 +1,34 @@
 """file for players"""
+import time as _time
+from threading import Event as _UninterruptableEvent
 import os
+import sys
 import random
 import keyboard
 import ship
+
+class _Event(_UninterruptableEvent):
+    def wait_stutter(self):
+        """ method allows for Event to be interrupted, as this is normally not possible """
+        while True:
+            if _UninterruptableEvent.wait(self, 0.5):
+                break
+
+def two_wait(hotkey_a = None, hotkey_b = None, suppress = False, trigger_on_release = False):
+    """
+    Near identical copy of the wait function present in keyboard,
+    but can take two hotkeys, allowing for custom global interrupts
+    """
+    if hotkey_a and hotkey_b:
+        lock = _Event()
+        remove_a = keyboard.add_hotkey(hotkey_a, lambda: lock.set(), suppress = suppress, trigger_on_release = trigger_on_release)
+        remove_b = keyboard.add_hotkey(hotkey_b, lambda: lock.set(), suppress = suppress, trigger_on_release = trigger_on_release)
+        lock.wait_stutter()
+        keyboard.remove_hotkey(remove_a)
+        keyboard.remove_hotkey(remove_b)
+    else:
+        while True:
+            _time.sleep(1e6)
 
 class Player:
     """
@@ -16,6 +42,21 @@ class Player:
         self.ships = []
         self.player_name = player_name
         self.board_size = board_size
+        self.pause = False
+        self.pause_mode = 1
+
+    def set_pause(self, value = True):
+        """
+        sets the value of pause to value
+        :param value: bool describes whether game state is in a paused condition
+        """
+        self.pause = value
+
+    def set_pause_mode(self, mode):
+        """
+        sets the value of pause_mode to value
+        """
+        self.pause_mode = mode
 
     def check_sunken(self):
         """
@@ -52,19 +93,22 @@ class Player:
         #no hit registered, can assume miss
         return "miss"
 
-    def captive_space(self, message = "- Press [space] To Continue ", hide_name = False, clear_console = False):
-        """
-        holds the player captive until spacebar is pressed
-        :param message: string message to be displayed while player is held captive
-        :param hide_name: bool if true does not print player name before message
-        """
-        if clear_console:
-            os.system('cls' if os.name=='nt' else 'clear')
-
-        print(f"{ self.player_name if not hide_name else '' }{ message }")
+    def captive_pause(self):
+        """ holds the player captive in pause menu and allows pause menu functionality """
+        #keyboard handling
+        key_1 = keyboard.on_press_key("1", lambda e: self.set_pause_mode(1))
+        key_2 = keyboard.on_press_key("2", lambda e: self.set_pause_mode(2))
+        key_3 = keyboard.on_press_key("3", lambda e: self.set_pause_mode(3))
         keyboard.wait(" ")
-        keyboard.unhook_all()
+        keyboard.unhook_key(key_1)
+        keyboard.unhook_key(key_2)
+        keyboard.unhook_key(key_3)
         keyboard.press(0x0E)
+
+        if self.pause_mode == 3:
+            sys.exit()
+        elif self.pause_mode == 2:
+            pass
 
     def prepare_ships(self, overlay = None):
         """
@@ -221,13 +265,24 @@ class Human(Player):
 
     def capture_input_shoot(self):
         """ method which captures inputs for shooting cursor until space is pressed """
-        keyboard.on_press_key("w", lambda event: self.complete_shoot("w"))
-        keyboard.on_press_key("a", lambda event: self.complete_shoot("a"))
-        keyboard.on_press_key("s", lambda event: self.complete_shoot("s"))
-        keyboard.on_press_key("d", lambda event: self.complete_shoot("d"))
-        keyboard.wait(" ")
-        keyboard.unhook_all()
-        self.complete_shoot(" ")
+        key_w = keyboard.on_press_key("w", lambda e: self.complete_shoot("w"))
+        key_a = keyboard.on_press_key("a", lambda e: self.complete_shoot("a"))
+        key_s = keyboard.on_press_key("s", lambda e: self.complete_shoot("s"))
+        key_d = keyboard.on_press_key("d", lambda e: self.complete_shoot("d"))
+        key_p = keyboard.on_press_key("p", self.set_pause)
+        two_wait(" ", "p")
+        keyboard.unhook_key(key_w)
+        keyboard.unhook_key(key_a)
+        keyboard.unhook_key(key_s)
+        keyboard.unhook_key(key_d)
+        keyboard.unhook_key(key_p)
+
+        if self.pause:
+            self.captive_pause()
+            self.set_pause(False)
+            self.complete_shoot()
+        else:
+            self.complete_shoot(" ")
 
     def draw_place_ships(self, key = None, shipper = None):
         """
@@ -292,14 +347,27 @@ class Human(Player):
         method which captures inputs for ship placement until space is pressed
         :param shipper: ship object passed through to draw_place_ships method
         """
-        keyboard.on_press_key("w", lambda event: self.draw_place_ships("w", shipper))
-        keyboard.on_press_key("a", lambda event: self.draw_place_ships("a", shipper))
-        keyboard.on_press_key("s", lambda event: self.draw_place_ships("s", shipper))
-        keyboard.on_press_key("d", lambda event: self.draw_place_ships("d", shipper))
-        keyboard.on_press_key("r", lambda event: self.draw_place_ships("r", shipper))
-        keyboard.wait(" ")
-        keyboard.unhook_all()
-        self.draw_place_ships(" ", shipper)
+        key_w = keyboard.on_press_key("w", lambda e: self.draw_place_ships("w", shipper))
+        key_a = keyboard.on_press_key("a", lambda e: self.draw_place_ships("a", shipper))
+        key_s = keyboard.on_press_key("s", lambda e: self.draw_place_ships("s", shipper))
+        key_d = keyboard.on_press_key("d", lambda e: self.draw_place_ships("d", shipper))
+        key_r = keyboard.on_press_key("r", lambda e: self.draw_place_ships("r", shipper))
+        key_p = keyboard.on_press_key("p", self.set_pause)
+        two_wait(" ", "p")
+        keyboard.unhook_key(key_w)
+        keyboard.unhook_key(key_a)
+        keyboard.unhook_key(key_s)
+        keyboard.unhook_key(key_d)
+        keyboard.unhook_key(key_r)
+        keyboard.unhook_key(key_p)
+
+        if self.pause:
+            self.captive_pause()
+            self.set_pause(False)
+            self.draw_place_ships(shipper = shipper)
+            self.capture_input_place(shipper)
+        else:
+            self.draw_place_ships(" ", shipper)
 
     def place_ships(self, battleships = 1, cruisers = 2, destroyers = 3, submarines = 4):
         """
@@ -403,6 +471,6 @@ if __name__ == "__main__":
         try:
             testplayer.shoot()
             testplayer.print_battlefield(mode = "markers")
-            testplayer.captive_space()
+            testplayer.captive_pause()
         except KeyboardInterrupt:
             quit()
