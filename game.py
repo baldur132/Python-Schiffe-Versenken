@@ -1,8 +1,7 @@
 """ Primary Game class, ties together the other classes """
 import os
-import sys
+import pickle
 import keyboard
-#import ship
 import player
 
 def captive_space(message = " Press [space] To Continue ", clear_console = False):
@@ -29,6 +28,8 @@ class Game:
         self.players = []
         self.selection_pointer = 0
         self.selection_callbacks = []
+        self.setup = True           #tracks current game phase
+        self.current_player = 0     #tracks current active player
 
         #image assets
         self.title = [
@@ -285,7 +286,7 @@ class Game:
 
     def display_titlecard(self):
         """ responsible for printing title card and start options"""
-        self.selection_callbacks = [self.display_gameoptions, "", quit]
+        self.selection_callbacks = [self.display_gameoptions, self.resume_game, quit]
         options = ["Start New Game", "Resume Game", "Quit"]
         hint = "Use [a] and [d] to move left and right, [space] to select"
         self.draw_selection(box_options = options, card = "title", hint = hint)
@@ -299,10 +300,59 @@ class Game:
 
 
     def save_game(self):
-        """ Saves the game state in a json encoded file """
-        player.clear_console()
-        print("game saved")
-        sys.exit()
+        """
+        Saves the game state in a json encoded file
+        @return bool true if file was successfully written
+        """
+        #try to open file and savewrite = True
+        if os.path.isfile("save_file.pickle"):
+            #ask to overwrite file
+            width = os.get_terminal_size().columns
+            val = ""
+            while val.lower() not in ("y", "yes", "n", "no"):
+                player.clear_console()
+                print("\033[1;37mFile Already Exists, Overwrite Current Save File?\033[0;0m ".center(width))
+                val = input(" " * (width // 2 - (33 if width % 2 else 32)) + "[y/n] >> ")
+
+            write = bool(val.lower() in ("y", "yes"))
+
+        if write:
+            try:
+                file = open("save_file.pickle", "wb")
+                pickle.dump(self, file, pickle.HIGHEST_PROTOCOL)
+                file.close()
+
+                player.clear_console()
+                print("Game has been successfully saved.")
+
+            except (IOError, OSError):
+                print("Game has failed to save")
+                return False
+
+        return True
+
+    def load_game(self):
+        """
+        Loads the game saved state into memory
+        @return bool true if load was successful
+        """
+        if os.path.isfile("save_file.pickle"):
+            try:
+                file = open("save_file.pickle", "rb")
+                data = pickle.load(file)
+                self.players = data.players
+                self.setup = data.setup
+                self.current_player = data.current_player
+                file.close()
+                return True
+
+            except (IOError, OSError):
+                #file could not be accessed/read
+                return False
+
+        #save file does not exist
+        return False
+
 
     def interpret_shot(self, value, user):
         """
@@ -340,7 +390,33 @@ class Game:
             captive_space(f"{ user.player_name } has won")
             self.display_endcard()
 
-    def run_game(self, player_count = 1, board_size = 10):
+    def run_game(self, skip_setup = False):
+        """ primary game loops """
+        #pregame setup
+        if not skip_setup:
+            for num, user in enumerate(self.players):
+                self.current_player = num
+                user.place_ships(battleships = 1, cruisers = 0, destroyers = 1, submarines = 0)
+
+        #run game
+        self.setup = False
+        play = True
+        while play:
+            for num, user in enumerate(self.players):
+                self.current_player = num
+
+                if user.save_exit:
+                    self.save_game()
+                    play = False
+                    break
+
+                value = user.shoot()
+                self.interpret_shot(value, user)
+                if value == "lost":
+                    play = False
+                    break
+
+    def prepare_game(self, player_count = 1, board_size = 10):
         """
         starts battleship game
         :param player_count: int number of players
@@ -361,22 +437,8 @@ class Game:
             self.players[0].target = self.players[1]
             self.players[1].target = self.players[0]
 
-            #pregame setup
-            for user in self.players:
-                user.place_ships(battleships = 1, cruisers = 0, destroyers = 1, submarines = 0)
-
             #run game
-            play = True
-            while play:
-                for user in self.players:
-                    if user.save_exit:
-                        self.save_game()
-                        break
-
-                    value = user.shoot()
-                    self.interpret_shot(value, user)
-                    if value == "lost":
-                        break
+            self.run_game()
         else:
             # multiplayer game
             #initialize players
@@ -392,30 +454,45 @@ class Game:
                 else:
                     user.target = self.players[num + 1]
 
-            #pregame setup
-            for user in self.players:
-                user.place_ships(battleships = 1, cruisers = 0, destroyers = 1, submarines = 0)
-
             #run game
-            play = True
-            while play:
-                for user in self.players:
-                    if user.save_exit:
-                        self.save_game()
-                        break
+            self.run_game()
 
-                    value = user.shoot()
-                    self.interpret_shot(value, user)
-                    if value == "lost":
-                        break
+    def resume_game(self):
+        """ Attempts to start a game saved in a file """
+        if self.load_game():
+            width = os.get_terminal_size().columns
+            print("Game has successfully been loaded...".center(width))
+
+            #set up pause
+            self.capture_pause()
+
+            #reset save state
+            for user in self.players:
+                user.save_exit = False
+
+            #finish pregame setup if applicable
+            if self.setup:
+                for num in range(self.current_player, len(self.players), 1):
+                    self.players[num].place_ships()
+
+                #run game normally
+                self.run_game(skip_setup = True)
+            else:
+                # run game starting with last player
+                #reorder list so that the player whose turn it was is first in list
+                for num in range(self.current_player):
+                    self.players.append(self.players.pop(0))
+
+                #continue game normally
+                self.run_game(skip_setup = True)
 
     def start_singleplayer(self):
         """ Starts Singleplayer game against computer """
-        self.run_game()
+        self.prepare_game()
 
     def start_multiplayer(self):
         """ Starts 1v1 multiplayer game """
-        self.run_game(player_count = 2)
+        self.prepare_game(player_count = 2)
 
     def start(self):
         """ Alias for display_titlecard, starts game menu """
@@ -424,5 +501,6 @@ class Game:
 if __name__ == "__main__":
     newgame = Game()
     #newgame.draw_selection(box_options = ["Ente", "quack"])
-    #newgame.start_game()
-    newgame.display_titlecard()
+    newgame.start()
+    #newgame.setup_game()
+    #newgame.resume_game()
