@@ -206,7 +206,7 @@ class Game:
                     options_string = "/" + options_string + "/"
                 else:
                     #not enough to distribute, pad edges
-                    options_string = (" " * (extra // 2)) + options_string + (" " * ((extra // 2 + 1) if extra % 2 else (excess // 2)))
+                    options_string = (" " * (extra // 2)) + options_string + (" " * ((extra // 2 + 1) if extra % 2 else (extra // 2)))
                     #add stoppers
                     options_string = "/" + options_string + "/"
 
@@ -310,6 +310,7 @@ class Game:
         """
         if not self.saved:
             #try to open file and savewrite = True
+            write = True
             if os.path.isfile("save_file.pickle"):
                 #ask to overwrite file
                 width = os.get_terminal_size().columns
