@@ -30,6 +30,7 @@ class Game:
         self.selection_callbacks = []
         self.setup = True           #tracks current game phase
         self.current_player = 0     #tracks current active player
+        self.saved = False          #ensures that save cannot be executed multiple times
 
         #image assets
         self.title = [
@@ -307,32 +308,35 @@ class Game:
         Saves the game state in a json encoded file
         @return bool true if file was successfully written
         """
-        #try to open file and savewrite = True
-        if os.path.isfile("save_file.pickle"):
-            #ask to overwrite file
-            width = os.get_terminal_size().columns
-            val = ""
-            while val.lower() not in ("y", "yes", "n", "no"):
-                player.clear_console()
-                print("\033[1;37mFile Already Exists, Overwrite Current Save File?\033[0;0m ".center(width))
-                val = input(" " * (width // 2 - (33 if width % 2 else 32)) + "[y/n] >> ")
+        if not self.saved:
+            #try to open file and savewrite = True
+            if os.path.isfile("save_file.pickle"):
+                #ask to overwrite file
+                width = os.get_terminal_size().columns
+                val = ""
+                while val.lower() not in ("y", "yes", "n", "no"):
+                    player.clear_console()
+                    print("\033[1;37mFile Already Exists, Overwrite Current Save File?\033[0;0m ".center(width))
+                    val = input(" " * (width // 2 - (33 if width % 2 else 32)) + "[y/n] >> ")
 
-            write = bool(val.lower() in ("y", "yes"))
+                write = bool(val.lower() in ("y", "yes"))
 
-        if write:
-            try:
-                file = open("save_file.pickle", "wb")
-                pickle.dump(self, file, pickle.HIGHEST_PROTOCOL)
-                file.close()
+            if write:
+                try:
+                    file = open("save_file.pickle", "wb")
+                    pickle.dump(self, file, pickle.HIGHEST_PROTOCOL)
+                    file.close()
 
-                player.clear_console()
-                print("Game has been successfully saved.")
+                    player.clear_console()
+                    print("Game has been successfully saved.")
 
-            except (IOError, OSError):
-                print("Game has failed to save")
-                return False
+                except (IOError, OSError):
+                    print("Game has failed to save")
+                    return False
 
-        return True
+            return True
+
+        return False
 
     def load_game(self):
         """
@@ -403,6 +407,7 @@ class Game:
 
                 if user.save_exit:
                     self.save_game()
+                    self.saved = True
                     play = False
                     return False
 
@@ -411,12 +416,13 @@ class Game:
         play = True
         while play:
             for num, user in enumerate(self.players):
-                self.current_player = num
-
                 if user.save_exit:
                     self.save_game()
+                    self.saved = True
                     play = False
                     break
+
+                self.current_player = num
 
                 value = user.shoot()
                 self.interpret_shot(value, user)
@@ -489,9 +495,19 @@ class Game:
                 self.run_game(skip_setup = True)
             else:
                 # run game starting with last player
-                #reorder list so that the player whose turn it was is first in list
-                for num in range(self.current_player):
-                    self.players.append(self.players.pop(0))
+                if self.current_player != 0:
+                    for num in range(self.current_player, len(self.players)):
+                        self.current_player = num
+
+                        if self.players[num].save_exit:
+                            self.save_game()
+                            self.saved = True
+                            break
+
+                        value = self.players[num].shoot()
+                        self.interpret_shot(value, self.players[num])
+                        if value == "lost":
+                            break
 
                 #continue game normally
                 self.run_game(skip_setup = True)
