@@ -56,7 +56,8 @@ class MyTestCase(TestCase):
         self.assertEqual(self.player_object.prepare_ships(), {'33': 'B', '43': 'C'})
 
     def test_print_battlefield(self):
-        expected_battlefield = """    | a | b | c | d | e | f | g | h | i | j |
+        expected_battlefield = """    
+    | a | b | c | d | e | f | g | h | i | j |
   1 |   |   |   |   |   |   |   |   |   |   |
   2 |   |   |   |   |   |   |   |   |   |   |
   3 |   |   |   |   |   |   |   |   |   |   |
