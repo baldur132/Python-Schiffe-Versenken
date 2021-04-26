@@ -24,7 +24,7 @@ class Game:
         :param num: number of players
         """
         #allow ansi escape codes
-        os.system("color")
+        os.system("color" if os.name == "nt" else "")
         self.players = []
         self.selection_pointer = 0
         self.selection_callbacks = []
@@ -179,10 +179,8 @@ class Game:
 
             #set incrementation direction
             if key in ("a", "d"):
-                direction = not key == "a"
-                direction = (key == "d")
                 #increment internal pointer
-                self.selection_pointer = self.selection_pointer + 1 if direction else self.selection_pointer - 1
+                self.selection_pointer = self.selection_pointer + 1 if key == "d" else self.selection_pointer - 1
             #bound selection pointer between 0 and options
             self.selection_pointer = 0 if self.selection_pointer < 0 else self.selection_pointer
             self.selection_pointer = item_count - 1 if self.selection_pointer > item_count - 1 else self.selection_pointer
@@ -243,7 +241,6 @@ class Game:
         keyboard.unhook_key(key_d)
         self.draw_selection(key = " ", box_options = box)
 
-
     def capture_pause(self, key = None):
         """ sets up hotkeys to capture key events even during keyboard.wait() """
         if key is None:
@@ -254,14 +251,18 @@ class Game:
             keyboard.add_hotkey("p", self.display_pause)
         else:
             #run event
+            hint = None
+
             if key == "1":
                 self.selection_pointer = 0
             elif key == "2":
                 self.selection_pointer = 1
+                hint = "Save game to file and exit"
             elif key == "3":
                 self.selection_pointer = 2
+                hint = "Stop game and exit - will NOT save game"
 
-            self.draw_selection(box_options = ["[1]Resume", "[2]Save and Exit", "[3]Abandon Game"], card = "pause")
+            self.draw_selection(box_options = ["[1]Resume", "[2]Save and Exit", "[3]Abandon Game"], card = "pause", hint = hint)
             keyboard.send(0x0E)
 
         return False
@@ -274,7 +275,9 @@ class Game:
 
     def display_pause(self):
         """ dispay pause menu, to allow for saving and exiting game """
-        self.draw_selection(box_options = ["[1]Resume", "[2]Save and Exit", "[3]Abandon Game"], card = "pause")
+        self.selection_pointer = 0
+        hint = "Select option with [1] [2] [3], confirm with [space]"
+        self.draw_selection(box_options = ["[1]Resume", "[2]Save and Exit", "[3]Abandon Game"], card = "pause", hint = hint)
 
     def display_gameoptions(self):
         """ prints selectable game options """
@@ -398,6 +401,11 @@ class Game:
                 self.current_player = num
                 user.place_ships(battleships = 1, cruisers = 0, destroyers = 1, submarines = 0)
 
+                if user.save_exit:
+                    self.save_game()
+                    play = False
+                    return False
+
         #run game
         self.setup = False
         play = True
@@ -415,6 +423,8 @@ class Game:
                 if value == "lost":
                     play = False
                     break
+
+        return True
 
     def prepare_game(self, player_count = 1, board_size = 10):
         """
@@ -473,7 +483,7 @@ class Game:
             #finish pregame setup if applicable
             if self.setup:
                 for num in range(self.current_player, len(self.players), 1):
-                    self.players[num].place_ships()
+                    self.players[num].place_ships(battleships = 1, cruisers = 0, destroyers = 1, submarines = 0)
 
                 #run game normally
                 self.run_game(skip_setup = True)

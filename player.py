@@ -44,7 +44,7 @@ class Player:
 
     def __init__(self, player_name = "Unnamed Player", board_size = 10):
         #allow ansi escape codes
-        os.system("color")
+        os.system("color" if os.name == "nt" else "")
         self.shooting_range = {}
         self.ships = []
         self.player_name = player_name
@@ -73,10 +73,11 @@ class Player:
         key_1 = keyboard.on_press_key("1", lambda e: self.set_pause_mode(1))
         key_2 = keyboard.on_press_key("2", lambda e: self.set_pause_mode(2))
         key_3 = keyboard.on_press_key("3", lambda e: self.set_pause_mode(3))
-        keyboard.wait(" ", suppress = True)
+        keyboard.wait(" ")
         keyboard.unhook_key(key_1)
         keyboard.unhook_key(key_2)
         keyboard.unhook_key(key_3)
+        keyboard.send(0x0E)
 
         if self.pause_mode == 3:
             clear_console()
@@ -261,11 +262,11 @@ class Human(Player):
             helptext = [
                 "",
                 "",
-                "          Shooting Cursor Control:",
+                "      Shooting Cursor Control:",
                 "",
-                "             W       -   move cursor up",
-                "          A  S  D    -   move cursor left / down / right",
-                "          [Space]    -   shoot at square",
+                "         W     P -   move cursor up / pause",
+                "      A  S  D    -   move cursor left / down / right",
+                "      [Space]    -   shoot at square",
             ]
             self.print_battlefield(mode = "markers", title = title, aside = helptext, cursor = self.targeting)
 
@@ -274,24 +275,28 @@ class Human(Player):
 
     def capture_input_shoot(self):
         """ method which captures inputs for shooting cursor until space is pressed """
-        key_w = keyboard.on_press_key("w", lambda e: self.complete_shoot("w"), suppress = True)
-        key_a = keyboard.on_press_key("a", lambda e: self.complete_shoot("a"), suppress = True)
-        key_s = keyboard.on_press_key("s", lambda e: self.complete_shoot("s"), suppress = True)
-        key_d = keyboard.on_press_key("d", lambda e: self.complete_shoot("d"), suppress = True)
-        key_p = keyboard.on_press_key("p", self.set_pause)
-        two_wait(" ", "p")
-        keyboard.unhook_key(key_w)
-        keyboard.unhook_key(key_a)
-        keyboard.unhook_key(key_s)
-        keyboard.unhook_key(key_d)
-        keyboard.unhook_key(key_p)
+        if not self.save_exit:
+            key_w = keyboard.on_press_key("w", lambda e: self.complete_shoot("w"))
+            key_a = keyboard.on_press_key("a", lambda e: self.complete_shoot("a"))
+            key_s = keyboard.on_press_key("s", lambda e: self.complete_shoot("s"))
+            key_d = keyboard.on_press_key("d", lambda e: self.complete_shoot("d"))
+            key_p = keyboard.on_press_key("p", self.set_pause)
+            two_wait(" ", "p")
+            keyboard.unhook_key(key_w)
+            keyboard.unhook_key(key_a)
+            keyboard.unhook_key(key_s)
+            keyboard.unhook_key(key_d)
+            keyboard.unhook_key(key_p)
 
-        if self.pause:
-            self.captive_pause()
-            self.set_pause(False)
-            self.complete_shoot()
-        else:
-            self.complete_shoot(" ")
+            if self.pause:
+                self.captive_pause()
+                self.set_pause(False)
+                if self.pause_mode != 2:
+                    self.complete_shoot()
+                else:
+                    self.target.save_exit = True
+            else:
+                self.complete_shoot(" ")
 
     def draw_place_ships(self, key = None, shipper = None):
         """
@@ -339,11 +344,11 @@ class Human(Player):
             helptext = [
                 "",
                 "",
-                "          Ship Placement Control:",
+                "      Ship Placement Control:",
                 "",
-                "             W   R   -   move ship up / rotate ship",
-                "          A  S  D    -   move ship left / down / right",
-                "          [Space]    -   place ship (red ship is not placeable)",
+                "         W  R  P -   move ship up / rotate ship / pause",
+                "      A  S  D    -   move ship left / down / right",
+                "      [Space]    -   place ship (red ship is not placeable)",
             ]
             self.print_battlefield(mode = "ship", title = title, aside = helptext, overlay = overlay)
 
@@ -355,11 +360,11 @@ class Human(Player):
         :param shipper: ship object passed through to draw_place_ships method
         """
         if not self.save_exit:
-            key_w = keyboard.on_press_key("w", lambda e: self.draw_place_ships("w", shipper), suppress = True)
-            key_a = keyboard.on_press_key("a", lambda e: self.draw_place_ships("a", shipper), suppress = True)
-            key_s = keyboard.on_press_key("s", lambda e: self.draw_place_ships("s", shipper), suppress = True)
-            key_d = keyboard.on_press_key("d", lambda e: self.draw_place_ships("d", shipper), suppress = True)
-            key_r = keyboard.on_press_key("r", lambda e: self.draw_place_ships("r", shipper), suppress = True)
+            key_w = keyboard.on_press_key("w", lambda e: self.draw_place_ships("w", shipper))
+            key_a = keyboard.on_press_key("a", lambda e: self.draw_place_ships("a", shipper))
+            key_s = keyboard.on_press_key("s", lambda e: self.draw_place_ships("s", shipper))
+            key_d = keyboard.on_press_key("d", lambda e: self.draw_place_ships("d", shipper))
+            key_r = keyboard.on_press_key("r", lambda e: self.draw_place_ships("r", shipper))
             key_p = keyboard.on_press_key("p", self.set_pause)
             two_wait(" ", "p")
             keyboard.unhook_key(key_w)
@@ -368,12 +373,16 @@ class Human(Player):
             keyboard.unhook_key(key_d)
             keyboard.unhook_key(key_r)
             keyboard.unhook_key(key_p)
+            keyboard.send(0x0E)
 
             if self.pause:
                 self.captive_pause()
                 self.set_pause(False)
-                self.draw_place_ships(shipper = shipper)
-                self.capture_input_place(shipper)
+                if self.pause_mode != 2:
+                    self.draw_place_ships(shipper = shipper)
+                    self.capture_input_place(shipper)
+                else:
+                    self.target.save_exit = True
             else:
                 self.draw_place_ships(" ", shipper)
 
@@ -407,6 +416,9 @@ class Human(Player):
         for _, shipper in enumerate(self.ships):
             self.draw_place_ships(shipper = shipper)
             self.capture_input_place(shipper)
+
+            if self.save_exit:
+                break
 
 class AI(Player):
     """class for AI player"""
