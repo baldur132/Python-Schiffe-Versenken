@@ -369,7 +369,7 @@ class Game:
         """
         width = os.get_terminal_size().columns
         #clear console
-        os.system('cls' if os.name=='nt' else 'clear')
+        player.clear_console()
 
         if not value == "lost" and user.human:
             if value == "hit":
@@ -395,7 +395,12 @@ class Game:
                 captive_space(message = "")
         elif value == "lost":
             #end game
-            captive_space(f"{ user.player_name } has won")
+            print("")
+            print(self.select_box_head.center(width))
+            print(f"{ user.player_name } is the Winner!".center(width))
+            print(self.select_box_foot.center(width))
+
+            captive_space("Press [space] to finish".center(width))
             self.display_endcard()
 
     def run_game(self, skip_setup = False):
