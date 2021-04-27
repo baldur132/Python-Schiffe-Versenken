@@ -23,8 +23,8 @@ class MyTestCase(TestCase):
             self.assertEqual(fake_out.getvalue(), expected_out)
 
     def test_set_pause(self):
-        self.player_object.set_pause()
-        self.assertEqual(self.player_object.pause, True)
+        self.player_object.set_pause_mode(mode=2)
+        self.assertEqual(self.player_object.pause_mode, 2)
 
     def test_set_pause_mode(self):
         self.player_object.set_pause_mode(2)
@@ -55,9 +55,12 @@ class MyTestCase(TestCase):
         self.cruiser.placed = True
         self.assertEqual(self.player_object.prepare_ships(), {'33': 'B', '43': 'C'})
 
+    def test_get_segment(self):
+        return_state = '    |'
+        self.assertEqual(self.human_object.get_segment([0, 0], "none"), return_state)
+
     def test_print_battlefield(self):
-        expected_battlefield = """    
-    | a | b | c | d | e | f | g | h | i | j |
+        expected_battlefield = """    | a | b | c | d | e | f | g | h | i | j |
   1 |   |   |   |   |   |   |   |   |   |   |
   2 |   |   |   |   |   |   |   |   |   |   |
   3 |   |   |   |   |   |   |   |   |   |   |
@@ -85,11 +88,24 @@ class MyTestCase(TestCase):
         expected_out_two = """[1;37mUnnamed Player - Shoot Square[0;0m
     | a | b | c | d | e | f | g | h | i | j |
   1 |[[0;36mo[0;0m]|   |   |   |   |   |   |   |   |   |
-  2 |   |   |   |   |   |   |   |   |   |   |          Shooting Cursor Control:
+  2 |   |   |   |   |   |   |   |   |   |   |      Shooting Cursor Control:
   3 |   |   |   |   |   |   |   |   |   |   |
-  4 |   |   |   |   |   |   |   |   |   |   |             W       -   move cursor up
-  5 |   |   |   |   |   |   |   |   |   |   |          A  S  D    -   move cursor left / down / right
-  6 |   |   |   |   |   |   |   |   |   |   |          [Space]    -   shoot at square
+  4 |   |   |   |   |   |   |   |   |   |   |      Q  W     P -   show ship view / cursor up / pause
+  5 |   |   |   |   |   |   |   |   |   |   |      A  S  D    -   move cursor left / down / right
+  6 |   |   |   |   |   |   |   |   |   |   |      [Space]    -   shoot at square
+  7 |   |   |   |   |   |   |   |   |   |   |
+  8 |   |   |   |   |   |   |   |   |   |   |
+  9 |   |   |   |   |   |   |   |   |   |   |
+ 10 |   |   |   |   |   |   |   |   |   |   |
+"""
+        expected_out_three = """[1;37mUnnamed Player - Ship View[0;0m
+    | a | b | c | d | e | f | g | h | i | j |
+  1 |   |   |   |   |   |   |   |   |   |   |
+  2 |   |   |   |   |   |   |   |   |   |   |      Player Ship View:
+  3 |   |   |   |   |   |   |   |   |   |   |
+  4 |   |   |   |   |   |   |   |   |   |   |         W       -   return to Shooting Input
+  5 |   |   |   |   |   |   |   |   |   |   |
+  6 |   |   |   |   |   |   |   |   |   |   |
   7 |   |   |   |   |   |   |   |   |   |   |
   8 |   |   |   |   |   |   |   |   |   |   |
   9 |   |   |   |   |   |   |   |   |   |   |
@@ -104,6 +120,9 @@ class MyTestCase(TestCase):
         with patch('sys.stdout', new=StringIO()) as fake_out_three:
             self.human_object.complete_shoot(key="w")
             self.assertEqual(fake_out_three.getvalue(), expected_out_two)
+        with patch('sys.stdout', new=StringIO()) as fake_out_four:
+            self.human_object.complete_shoot(key="q")
+            self.assertEqual(fake_out_four.getvalue(), expected_out_three)
 
     def test_draw_place_ships(self):
         self.assertEqual(self.human_object.draw_place_ships(), False)
@@ -122,7 +141,7 @@ class MyTestCase(TestCase):
     def test_capture_input_place(self):
         self.human_object.pause = True
         self.human_object.capture_input_place(self.battleship)
-        self.assertEqual(self.human_object.pause, False)
+        self.assertEqual(self.human_object.pause, True)
 
     def test_AI_shoot(self):
         self.assertEqual(self.AI_object.shoot(), "miss")
