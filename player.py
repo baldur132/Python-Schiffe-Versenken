@@ -46,21 +46,14 @@ class Player:
         #allow ansi escape codes
         os.system("color" if os.name == "nt" else "")
         self.shooting_range = {}
+        self.hit_markers = {}
         self.ships = []
         self.player_name = player_name
         self.board_size = board_size
-        self.pause = False
-        self.pause_mode = 1
+        self.pause_mode = 0
         self.save_exit = False
 
-    def set_pause(self, value = True):
-        """
-        sets the value of pause to value
-        :param value: bool describes whether game state is in a paused condition
-        """
-        self.pause = value
-
-    def set_pause_mode(self, mode):
+    def set_pause_mode(self, mode = 1):
         """
         sets the value of pause_mode to value
         """
@@ -112,9 +105,13 @@ class Player:
                 if shipper.sunken:
                     #check if all ships have been sunken
                     if self.check_sunken():
+                        self.hit_markers[str(coord[0]) + str(coord[1])] = "\033[0;31mx\033[0;0m"
                         return "lost"
                     #ship has been sunken
+                    self.hit_markers[str(coord[0]) + str(coord[1])] = "\033[0;31mx\033[0;0m"
                     return "sink"
+                #insert hit
+                self.hit_markers[str(coord[0]) + str(coord[1])] = "\033[0;31mx\033[0;0m"
                 #return hit
                 return "hit"
         #no hit registered, can assume miss
@@ -142,10 +139,69 @@ class Player:
 
         return ship_pos
 
-    def print_battlefield(self, mode = "none", title = None, aside = None, footer = None, overlay = None, cursor = None):
+    def get_segment(self, nums, mode = "none", ship_pos = None, cursor = None):
+        """
+        returns a segment of the battlefield based on a given x and y value
+        as well as other data. exists to appease the pylint god
+        :param nums: array of two integers, position on board
+        :param mode: mode of print, see print_battlefield
+        :param ship_pos: dict of ship positions, see prepare_ships
+        :param cursor: array of two integers, position of cursor on board
+        """
+        segment = ""
+        numx = nums[0]
+        numy = nums[1]
+        if numy == 0:
+            #print top index, avoiding top left blank
+            letter = chr(ord("`") + numx)
+            segment += "    |" if numx == 0 else f" { letter } |"
+            return segment
+
+        #print left hand index
+        if numx == 0:
+            #switch spacing for 2 character numbers
+            segment += f" { numy } |" if numy > 9 else f"  { numy } |"
+            return segment
+
+        #print field body
+        if mode in ("ship", "composite"):
+            #print player ships
+            if str(numx - 1) + str(numy - 1) in self.hit_markers and mode == "composite":
+                segment += f" { self.hit_markers[str(numx - 1) + str(numy - 1)] } |"
+            elif str(numx) + str(numy) in ship_pos:
+                segment += f" { ship_pos[str(numx) + str(numy)] } |"
+            else:
+                segment += "   |"
+            return segment
+
+        if mode == "markers":
+            #print hit/miss markers on board
+            #draw cursor
+            if cursor is not None and numx == cursor[0] + 1 and numy == cursor[1] + 1:
+                if str(numx - 1) + str(numy - 1) in self.shooting_range:
+                    segment += f"[{ self.shooting_range[str(numx - 1) + str(numy - 1)] }]|"
+                else:
+                    segment += "\033[0;32m[-]\033[0;0m|"
+            else:
+                if str(numx - 1) + str(numy - 1) in self.shooting_range:
+                    segment += f" { self.shooting_range[str(numx - 1) + str(numy - 1)] } |"
+                else:
+                    segment += "   |"
+            return segment
+
+        #same as mode none
+        segment += "   |"
+
+        return segment
+
+    def print_battlefield(self, mode = "none", title = None, aside = None, overlay = None, cursor = None):
         """
         Prints the player's own ships on the battlefield
-        :param mode: print mode ("none", "ship", "markers")
+        :param mode: print mode ("none", "ship", "markers", "composite")
+            mode "none": prints an empty board of size self.board_size
+            mode "ships": prints player's ships on the board
+            mode "markers": prints the player's hits and misses on the board
+            mode "composite": prints player ships and enemy hits on board
         :param title: string, text to be printed above the board
         :param aside: array of strings to be printed next to the board
         :param footer: string to be printed at the bottom of the board
@@ -156,7 +212,7 @@ class Player:
         clear_console()
 
         #get all ship positions
-        if mode == "ship":
+        if mode in ("ship", "composite"):
             ship_pos = self.prepare_ships(overlay = overlay)
 
         print(title + "\n" if title is not None else "", end="")
@@ -165,46 +221,16 @@ class Player:
         for numy in range(self.board_size + 1):
             #iterate through each column
             for numx in range(self.board_size + 1):
-                if numy == 0:
-                    #print top index, avoiding top left blank
-                    letter = chr(ord("`") + numx)
-                    print("    |" if numx == 0 else f" { letter } |", end="")
+                if mode in ("ship", "composite"):
+                    line = self.get_segment([numx, numy], mode, ship_pos, cursor)
                 else:
-                    #print left hand index
-                    if numx == 0:
-                        #switch spacing for 2 character numbers
-                        print(f" { numy } |" if numy > 9 else f"  { numy } |", end="")
-                    else:
-                        #print field body
-                        if mode == "ship":
-                            #print player ships
-                            if str(numx) + str(numy) in ship_pos:
-                                print(f" { ship_pos[str(numx) + str(numy)] } |", end="")
-                            else:
-                                print("   |", end="")
-                        elif mode == "markers":
-                            #print hit/miss markers on board
-                            #draw cursor
-                            if cursor is not None and numx == cursor[0] + 1 and numy == cursor[1] + 1:
-                                if str(numx - 1) + str(numy - 1) in self.shooting_range:
-                                    print(f"[{ self.shooting_range[str(numx - 1) + str(numy - 1)] }]|", end="")
-                                else:
-                                    print("\033[0;32m[-]\033[0;0m|", end="")
-                            else:
-                                if str(numx - 1) + str(numy - 1) in self.shooting_range:
-                                    print(f" { self.shooting_range[str(numx - 1) + str(numy - 1)] } |", end="")
-                                else:
-                                    print("   |", end="")
-                        else:
-                            #same as mode none
-                            print("   |", end="")
+                    line = self.get_segment([numx, numy], mode, cursor = cursor)
+                print(line, end="")
             #print final newlines
             if aside is not None and numy < len(aside):
                 print(aside[numy])
             else:
                 print("")
-
-        print(footer + "\n" if footer is not None else "", end="")
 
 class Human(Player):
     """class for human player"""
@@ -258,17 +284,28 @@ class Human(Player):
                 self.targeting[1] = self.board_size - 1 if self.targeting[1] > self.board_size - 1 else self.targeting[1]
 
             #print battlefield with markers and cursor
-            title = f"\033[1;37m{ self.player_name } - Shoot Square\033[0;0m"
-            helptext = [
-                "",
-                "",
-                "      Shooting Cursor Control:",
-                "",
-                "         W     P -   move cursor up / pause",
-                "      A  S  D    -   move cursor left / down / right",
-                "      [Space]    -   shoot at square",
-            ]
-            self.print_battlefield(mode = "markers", title = title, aside = helptext, cursor = self.targeting)
+            if key == "q":
+                title = f"\033[1;37m{ self.player_name } - Ship View\033[0;0m"
+                helptext = [
+                    "",
+                    "",
+                    "      Player Ship View:",
+                    "",
+                    "         W       -   return to Shooting Input",
+                ]
+                self.print_battlefield(mode = "composite", title = title, aside = helptext)
+            else:
+                title = f"\033[1;37m{ self.player_name } - Shoot Square\033[0;0m"
+                helptext = [
+                    "",
+                    "",
+                    "      Shooting Cursor Control:",
+                    "",
+                    "      Q  W     P -   show ship view / cursor up / pause",
+                    "      A  S  D    -   move cursor left / down / right",
+                    "      [Space]    -   shoot at square",
+                ]
+                self.print_battlefield(mode = "markers", title = title, aside = helptext, cursor = self.targeting)
 
         #send backspace to prevent command line getting filled
         keyboard.send(0x0E)
@@ -280,19 +317,22 @@ class Human(Player):
             key_a = keyboard.on_press_key("a", lambda e: self.complete_shoot("a"))
             key_s = keyboard.on_press_key("s", lambda e: self.complete_shoot("s"))
             key_d = keyboard.on_press_key("d", lambda e: self.complete_shoot("d"))
-            key_p = keyboard.on_press_key("p", self.set_pause)
+            key_q = keyboard.on_press_key("q", lambda e: self.complete_shoot("q"))
+            key_p = keyboard.on_press_key("p", self.set_pause_mode)
             two_wait(" ", "p")
             keyboard.unhook_key(key_w)
             keyboard.unhook_key(key_a)
             keyboard.unhook_key(key_s)
             keyboard.unhook_key(key_d)
+            keyboard.unhook_key(key_q)
             keyboard.unhook_key(key_p)
 
-            if self.pause:
+            if self.pause_mode:
                 self.captive_pause()
-                self.set_pause(False)
-                if self.pause_mode != 2:
+                self.set_pause_mode(0)
+                if not self.save_exit:
                     self.complete_shoot()
+                    self.capture_input_shoot()
                 else:
                     self.target.save_exit = True
             else:
@@ -365,7 +405,7 @@ class Human(Player):
             key_s = keyboard.on_press_key("s", lambda e: self.draw_place_ships("s", shipper))
             key_d = keyboard.on_press_key("d", lambda e: self.draw_place_ships("d", shipper))
             key_r = keyboard.on_press_key("r", lambda e: self.draw_place_ships("r", shipper))
-            key_p = keyboard.on_press_key("p", self.set_pause)
+            key_p = keyboard.on_press_key("p", self.set_pause_mode)
             two_wait(" ", "p")
             keyboard.unhook_key(key_w)
             keyboard.unhook_key(key_a)
@@ -375,10 +415,10 @@ class Human(Player):
             keyboard.unhook_key(key_p)
             keyboard.send(0x0E)
 
-            if self.pause:
+            if self.pause_mode:
                 self.captive_pause()
-                self.set_pause(False)
-                if self.pause_mode != 2:
+                self.set_pause_mode(0)
+                if not self.save_exit:
                     self.draw_place_ships(shipper = shipper)
                     self.capture_input_place(shipper)
                 else:
@@ -481,17 +521,12 @@ class AI(Player):
                 value = shipper.place(pos = pos, orient = orient, ships = self.ships, board_size = self.board_size)
 
 if __name__ == "__main__":
-    testtarget = Human(player_name = "Cannon Fodder")
+    #testtarget = Human(player_name = "Cannon Fodder")
     testplayer = Human(player_name = "Player One")
-    testplayer.target = testtarget
+    #testplayer.target = testtarget
     #testplayer.ships["Battleships"] = [ship.Battleship()]
     #testplayer.ships["Battleships"][0].place([5,4], True, ships=testplayer.ships)
-    testtarget.place_ships()
+    #testtarget.place_ships()
 
-    while True:
-        try:
-            testplayer.shoot()
-            testplayer.print_battlefield(mode = "markers")
-            testplayer.captive_pause()
-        except KeyboardInterrupt:
-            quit()
+    testplayer.print_battlefield(mode = "none")
+    #testplayer.captive_pause()
