@@ -89,31 +89,41 @@ Bewertung der Coverage und Sinnvollheit der Tests:
 
 Bewertung der Fehlersicherheit:
 •	Werden Fehleingaben korrekt abgefangen?
-◦	Nenne 2 Beispiele wo ein Fehler abgefangen wird
-
+Fehleingaben sind in dem Programm im ersten Sinne dadurch verhindert, das die eingabe Möglichkeiten eingeschränkt sind.
+Benutzer können mit dem interface nur mit WASD sowie einige andere tasten mit dem Spiel interagieren. Dabei sind aber nicht
+alle Fehlermöglichkeiten ausgeschlossen. Es muss sicher gestellt werden das der Cursor bzw. das Schiff nicht aus dem Feld
+Rausbewegt werden darf. Für die Schiffplatzierung sind zwei Sicherheitsstufen implementiert: zum einen die Callback Funktion
+verhindert das die Schiffe aus dem Spielfeld gedrückt werden dürfen, und zum anderen berechnet auch die place() Funktion in
+der Ship Klasse ob die Position des Schiffes valide ist. Für den Schusscursor ist nur in der Callback Funktion einen Check
+der sichert, das der Cursor sich im Spielfeld befindet. Innerhalb von draw_selections (routine die die Menüs darstellt) ist 
+auch ein Check der verhindert, das die selection_pointer Attribute größer ist als die anzahl der gegebenen Optionen.
+    ◦	Nenne 2 Beispiele wo ein Fehler abgefangen wird
+         - Während der Schiffbewegung
+         - Beim Aufbau der Menüoptionen
 
 Pylint Ausgabe:
 Game.py:
-game.py:19:0: R0902: Too many instance attributes (14/7) (too-many-instance-attributes)
-------------------------------------------------------------------
-Your code has been rated at 9.96/10 (previous run: 9.96/10, +0.00)
+    game.py:19:0: R0902: Too many instance attributes (14/7) (too-many-instance-attributes)
+    ------------------------------------------------------------------
+    Your code has been rated at 9.96/10 (previous run: 9.96/10, +0.00)
 
 Player.py:
-player.py:204:4: R0913: Too many arguments (6/5) (too-many-arguments)
-------------------------------------------------------------------
-Your code has been rated at 9.97/10 (previous run: 9.97/10, +0.00)
+    player.py:204:4: R0913: Too many arguments (6/5) (too-many-arguments)
+    ------------------------------------------------------------------
+    Your code has been rated at 9.97/10 (previous run: 9.97/10, +0.00)
 
 Ship.py:
-ship.py:29:4: R0913: Too many arguments (6/5) (too-many-arguments)
-------------------------------------------------------------------
-Your code has been rated at 9.83/10 (previous run: 9.83/10, +0.00)
+    ship.py:29:4: R0913: Too many arguments (6/5) (too-many-arguments)
+    ------------------------------------------------------------------
+    Your code has been rated at 9.83/10 (previous run: 9.83/10, +0.00)
+
 Main.py:
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+    --------------------------------------------------------------------
+    Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
 
 Bewertung der Code-Qualität/Lesbarkeit:
 •	Begründet noch vorhandene Pylint Warnungen
-
 Es sind noch 3 pylint Kommentare vorhanden:
  - game.py      z.19:   class Game:
  - player.py    z.204:  def print_battlefield(self, mode = "none", title = None, aside = None, overlay = None, cursor = None):
