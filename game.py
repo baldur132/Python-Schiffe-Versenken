@@ -29,7 +29,7 @@ def captive_space(message = " Press [space] To Continue ", clear_console = False
 #    it is justified to leave the image assets as attributes of the Game class.
 class Game:
     """ Game class, creates a battleship instance """
-    def __init__(self):
+    def __init__(self) -> object:
         """
         Game constructor
         :param num: number of players
