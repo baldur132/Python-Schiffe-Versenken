@@ -12,17 +12,17 @@ Verwendete Pylint Version: Pylint 2.6.0
 Verwendete nachinstallierte Bibliotheken: Keyboard
 
 Probleme:
-Unter Mac Os muss die main.py Funktion außerhalb von Pycharm/VSCodium… im Terminal mit dem sudo Befehl gestartet werden,
-da Mac Os die Tastendrücke abfängt und so das Spiel nicht gespielt werden kann. Unter jedem System hat Pycharm das
-Problem den Befehl os.get_terminal_width() nicht ausführen zu können, da Pycharm kein richtiges Terminal sondern ein
-embedded terminal emulator verwendet und so die Größe nicht festgestellt werden kann.
+Unter Mac Os / Linux muss die main.py Funktion außerhalb von Pycharm/VSCodium… im Terminal mit dem sudo Befehl gestartet werden,
+da Mac Os / Linux die Tastendrücke abfängt und so das Spiel nicht gespielt werden kann (heißt auch, das das keyboard modul auch
+auf Linux unter dem root user installiert werden muss). Unter jedem System hat Pycharm das Problem den Befehl os.get_terminal_width() 
+nicht ausführen zu können, da Pycharm kein richtiges Terminal sondern ein embedded terminal emulator verwendet und so die Größe 
+nicht festgestellt werden kann (dadurch das ioctl() im pycharm terminal nicht existiert).
 
 Beschreibung des Dateiformats zum Speichern des Spiels:
 •	Gespeicherter Spielstand einfügen
-Um den Spielstand zu speichern benutzen wir das Dateiformat JSON, ein Datenaustauschformat das für uns Menschen einfach
-zu lesen und schreiben und für Maschinen einfach zu analysieren und generieren ist. Bei JSON handelt es sich um ein
-Textformat das komplett unabhängig von Programmiersprachen ist weshalb viele Programmierer aus der Familie der
-C-basierten Sprache (inclusive C, C++, C#, Java, Python und anderen) es gerne benutzt wird.
+Um den Spielstand zu speichern benutzen wir die serialisierte Ausgabe von dem pickle Python modul. Dabei wird das Game
+Objekt in einem byte Stream serialisiert und einfach ein einer Datei gespeichert. Um dem Spielstand wieder zu laden
+wird dieser byte Stream einfach mit deim pickle modul wieder eingelesen und die wesentlichen Attributen importiert.
 
 Beschreibung des Benutzerinterfaces:
 Zu Beginn des Spiels wird eine Abfrage gestartet ob man ein neues Spiel starten, das angefangene Spiel weiterspielen
@@ -32,30 +32,37 @@ mit Single Player oder 1v1 und Zurück welches sich auch mit A, D navigieren lä
 W, A, S, D navigiert, wenn man nun das Spiel beginnt lassen sich die Schiffe mit W nach oben, A nach links, S nach
 unten und D nach rechts verschieben. Die Taste R rotiert das Schiff und mit der Leertaste wird wieder bestätigt.
 Wenn nun alle Schiffe gesetzt wurden und das Spiel bis zum Tode beginnt lässt sich wieder das Muster der Steuerung
-erkennen und der Schuss wird wie gewohnt mit W, A, S, D bewegt und mit der Leertaste endgültig bestätigt.
+erkennen und der Schuss wird wie gewohnt mit W, A, S, D bewegt und mit der Leertaste endgültig bestätigt. In dieser
+phase kann man auch die Q taste benutzen um seine eigenen Schiffe anzuschauen.
+Während dem Spiel kann man zu fast jeder zeit die P Taste drücken um dem Pause Menü hochzubringen. Innerhalb des Menüs
+kann man mit dem 1 2 3 Tasten eine Option auswählen und mit Leertaste bestätigen. 
 
 Beschreibung der Architektur:
 Insgesamt gibt es 3 große Klassen Game, Ship und Player. Die Klasse Player besitzt zwei wichtige Unterklassen Human und
-Ai. Diese haben zwei fast identische Methoden da sie diese brauchen einmal shoot und place-ships. Place-ships
+Ai. Diese haben zwei fast identische Methoden da sie diese brauchen einmal shoot und place_ships. Place_ships
 platziert am Anfang die Schiffe, das ist aber bei beiden unterschiedlich da die Methode Ai die Schiffe zufällig setzt.
-Bei Human ist das wesentlich anders die Methode capture input place fängt die Keyboardtasten ab und ruft die Methode
-draw-place-ship auf und bewegt dann aktiv das Schiff. Dadurch wiederrum wird die Klasse ship aufgerufen und ruft
-print-battlefield auf um zu sehen wo das Schiff ist und wie man es auf dem Spielfeld bewegt. In Ai sucht die Methode
-shoot ein zufälliges Feld aus und stellt auch gleichzeitig fest dass nicht ein Feld zweimal beschossen wird. Danach
-ruft diese die Methode get shot vom Gegner auf und man gibt die Position an wohin man schießen will und gibt auch
-gleich die Felder mit wo man schon beschossen hat. Die Methode Shooting rage speichert alle Felder wo schon beschossen
-wurden. Bei Human ist die shoot Methode relativ identisch. Bei shoot muss abgefragt werden wohin geschossen werden
-will diese ruft dann get shoot als erstes auf und der Spieler gibt an wohin geschossen werden soll. Die Klasse Ship
-stellt das Schiff dar und hat auch die Attribute gespeichert und erstellt dann ein Objekt damit. Für die Klasse Ship
-gibt es zwei wichtige Methoden place und get hits. Place schaut ob ein Schiff platziert werden darf und platziert es
-dann auf dem Spielbrett wenn nicht wird es rot markiert und kann auch nicht platziert werden. Die Methode get-hits
-prüft ob ein Schuss ein Schiff trifft oder nicht. Die Klasse Game ist zuständig für den gesamten Spielablauf. Es
-startet das Spiel und steuert das ganze Menüsystem. In Game wird ein Spiel erstellt, geladen oder fortgesetzt es ist
-das Herzstück des ganzen Spiels.
+Bei Human ist das wesentlich anders die Methode capture_input_place fängt die Keyboardtasten ab und ruft die Methode
+draw_place_ship auf und bewegt dann aktiv das Schiff, oder setzt dem Schiff wenn der Benutzer die entsprechende Taste
+drückt. Diese ruft am ende die print_battlefield Methode auf, welches das Spielfeld erneut mahlt um den bewegtem Schiff 
+darzustellen, sowie Schiffe die schon auf dem Spielfeld gesetzt worden sind. 
+Die Methode shoot in Ai sucht ein zufälliges Feld aus und stellt auch gleichzeitig fest dass nicht ein Feld zweimal 
+beschossen wird. Danach ruft diese die Methode get_shot vom Gegner auf und man gibt die Position an wohin man geschossen 
+hat und gibt auch gleich die Felder mit wo man schon beschossen hat mit. Der Rückgabewert dieser Methode gibt dann an,
+ob am diesen Feld getroffen worden ist oder nicht, sowie ob ein Schiff gesenkt worden ist und ob man gewonnen hat.
+Die Attribute shooting_range speichert alle Felder wo schon beschossen wurden und ob da ein treffer war. Bei Human 
+ist die shoot Methode relativ identisch. Bei shoot hingegen muss abgefragt werden wohin geschossen werden
+will. Diese ruft dann get_shoot als erstes auf und der Spieler gibt an wohin geschossen werden soll. Dabei ist die
+Tastenabfrage fast identisch zu capture_input_place. 
+Die Klasse Ship stellt das Schiff dar und hat auch die wesendlichen Schiff- Attributen gespeichert. Für die Klasse Ship
+gibt es zwei wichtige Methoden place und get_hits. Place schaut ob ein Schiff platziert werden darf und platziert es
+dann auf dem Spielbrett wenn es nicht auf einen anderen Schiff aufliegt und komplett auf dem Brett ist. Die Methode get_hits
+prüft ab, ob ein Schuss sein Schiff Objekt trifft oder nicht. 
+Die Klasse Game ist zuständig für den gesamten Spielablauf. Es steuert das ganze Menüsystem und regelt den Spielablauf. 
+In Game wird ein Spiel erstellt, geladen oder fortgesetzt und ist dabei das Kleber des ganzen Spiels.
 
 Beschreibung des Computergegners (4er Gruppen):
 Der Computergegner ist ein Spieler der seine Schiffe zufällig auf dem Spielfeld platziert sowie er auch zufällig seine
-Schüsse abgibt.
+Schüsse abgibt, jedoch ohne das es mehrmals auf das gleiche Feld schießt.
 
 Dokumentation von einem kompletten Spielablauf:
 Datei anbei als spielablauf.txt.
@@ -106,8 +113,20 @@ Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
 
 Bewertung der Code-Qualität/Lesbarkeit:
 •	Begründet noch vorhandene Pylint Warnungen
-•	Begründet warum euer Code gut lesbar ist
 
+Es sind noch 3 pylint Kommentare vorhanden:
+ - game.py      z.19:   class Game:
+ - player.py    z.204:  def print_battlefield(self, mode = "none", title = None, aside = None, overlay = None, cursor = None):
+ - ship.py      z.29:   def place(self, pos = None, orient = None, ships = None, board_size = 10, test = False):
+
+Die Begründungen sind jeweils vor jeder Zeile zu finden, auf Englisch.
+
+•	Begründet warum euer Code gut lesbar ist
+Das gesamte Modul ist fast zu 100% im objektorientiertem Stil programmiert. Dabei würde immer inbetracht gehalten,
+dass die Bezeichnungen für die jeweiligen Attributen und Methoden logisch nachvollziebar sind. Sonst ist die Stuktur
+vom Programm relativ einfach gehalten, welches zum Verständis stark beiträgt. Methoden sind nach ihrer Funktion
+gruppiert, callback funktionen sowie zusammenhängende Unterfunktionen sind über ihrer Oberfunktion geordnet. Dabei
+ist es einfach nachzuvollziehen welches code welches aufruft. 
 
 Bewertungstabelle:
 •	Ausgefüllte Bewertungstabelle
