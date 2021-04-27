@@ -68,23 +68,34 @@ Dokumentation von einem kompletten Spielablauf:
 Datei anbei als spielablauf.txt.
 
 Log von den Tests:
-test_player.py:
-test_ship.py:
+Datei anbei als coverage-ausgabe.txt
 
 
 Bewertung der Testergebnisse:
-•	Grund für fehlschlagende Tests
+Die Tests funktionieren vollumfänglich solange man sie nicht in Pycharm durchführt. Dort schlagen sie wegen einem
+umgebungsbedingten OSError fehl. Außerdem muss beim Durchführen der Tests aufgrund der input capture des Öfteren die
+Leertaste gedrückt werden.
 
 
 Code-Coverage Ausgabe:
-•	Tests mit Coverage ausführen und Ausgabe hier einfügen
+Name             Stmts   Miss  Cover
+------------------------------------
+game.py            272     90    67%
+player.py          299     75    75%
+ship.py             60     14    77%
+test_game.py       130      0   100%
+test_player.py      96      0   100%
+test_ship.py        19      0   100%
+------------------------------------
+TOTAL              876    179    80%
 
 
 Bewertung der Coverage und Sinnvollheit der Tests:
-•	Gewünscht ist eine Coverage von min 75%
-◦	Wurde dies erreicht? Wenn nein, warum nicht?
-•	Begründet warum ihr euch sicher seid alles mit Tests abgedeckt zu haben
-•	Fehlerfälle in den Tests überprüft?
+Die Tests der Module player.py und ship.py decken den größten und wichtigsten Teil des Codes ab. Lediglich Methoden, 
+wie capture_input_shoot können nicht getestet werden, da sich beim entsprechenden Test die Konsole "aufhängen" würde.
+Bei game.py konnten die 75% nicht erreicht werden, weil einige Methoden einen größeren Teil der Game-Engine enthalten,
+sodass man für den Test teilweise das komplette Spiel spielen müsste. Eine Coverage von 75% wäre daher mit sinnvollen Tests 
+für game.py nicht zu erreichen. Die testbaren Methoden wurden aber mit umfangreichen Tests abgedeckt.
 
 
 Bewertung der Fehlersicherheit:
