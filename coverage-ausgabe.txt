@@ -1,0 +1,132 @@
+PS D:\Documents D\Coding\Python\DHBW\SchiffeVersenken\Python-Schiffe-Versenken> coverage run -m unittest discover
+..								 .─────────────────────────────────────
+
+								/   ____                            __
+							   /   / __ \____ ___  __________  ____/ /
+							  /   / /_/ / __ `/ / / / ___/ _ \/ __  /
+								 / ____/ /_/ / /_/ (__  )  __/ /_/ /   /
+								/_/    \__,_/\__,_/____/\___/\__,_/   /
+																	 /
+							   ─────────────────────────────────────'
+					   .──────────────────────────────────────────────────────
+					  /  [1]Resume  |  [2]Save and Exit  |  [3]Abandon Game  /
+					  ──────────────────────────────────────────────────────'
+								 .─────────────────────────────────────
+								/   ____                            __
+							   /   / __ \____ ___  __________  ____/ /
+							  /   / /_/ / __ `/ / / / ___/ _ \/ __  /
+								 / ____/ /_/ / /_/ (__  )  __/ /_/ /   /
+								/_/    \__,_/\__,_/____/\___/\__,_/   /
+																	 /
+							   ─────────────────────────────────────'
+					   .──────────────────────────────────────────────────────
+					  /  [1]Resume  |  [2]Save and Exit  |  [3]Abandon Game  /
+					  ──────────────────────────────────────────────────────'
+									 Save game to file and exit
+								 .─────────────────────────────────────
+								/   ____                            __
+							   /   / __ \____ ___  __________  ____/ /
+							  /   / /_/ / __ `/ / / / ___/ _ \/ __  /
+								 / ____/ /_/ / /_/ (__  )  __/ /_/ /   /
+								/_/    \__,_/\__,_/____/\___/\__,_/   /
+																	 /
+							   ─────────────────────────────────────'
+					   .──────────────────────────────────────────────────────
+					  /  [1]Resume  |  [2]Save and Exit  |  [3]Abandon Game  /
+					  ──────────────────────────────────────────────────────'
+							  Stop game and exit - will NOT save game
+....								 .─────────────────────────────────────
+
+								/   ____                            __
+							   /   / __ \____ ___  __________  ____/ /
+							  /   / /_/ / __ `/ / / / ___/ _ \/ __  /
+								 / ____/ /_/ / /_/ (__  )  __/ /_/ /   /
+								/_/    \__,_/\__,_/____/\___/\__,_/   /
+																	 /
+							   ─────────────────────────────────────'
+					   .──────────────────────────────────────────────────────
+					  /  [1]Resume  |  [2]Save and Exit  |  [3]Abandon Game  /
+					  ──────────────────────────────────────────────────────'
+						Select option with [1] [2] [3], confirm with [space]
+					   .──────────────────────────────────────────────────────
+					  /   Start New Game    |    Resume Game    |    Quit    /
+					  ──────────────────────────────────────────────────────'
+.				  File Already Exists, Overwrite Current Save File?
+				  [y/n] >> y 
+Game has been successfully saved.
+......Unnamed Player - Place Ships
+    | a | b | c | d | e | f | g | h | i | j |
+  1 |   |   |   |   |   |   |   |   |   |   |
+  2 |   |   |   |   |   |   |   |   |   |   |      Ship Placement Control:
+  3 |   |   | B |   |   |   |   |   |   |   |
+  4 |   |   | B |   |   |   |   |   |   |   |         W  R  P -   move ship up / rotate ship / pause
+  5 |   |   | B |   |   |   |   |   |   |   |      A  S  D    -   move ship left / down / right
+  6 |   |   | B |   |   |   |   |   |   |   |      [Space]    -   place ship (red ship is not placeable)
+  7 |   |   | B |   |   |   |   |   |   |   |
+  8 |   |   |   |   |   |   |   |   |   |   |
+  9 |   |   |   |   |   |   |   |   |   |   |
+ 10 |   |   |   |   |   |   |   |   |   |   |
+Unnamed Player - Place Ships
+    | a | b | c | d | e | f | g | h | i | j |
+  1 |   |   |   |   |   |   |   |   |   |   |
+  2 |   |   |   |   |   |   |   |   |   |   |      Ship Placement Control:
+  3 |   |   | B | B | B | B | B |   |   |   |
+  4 |   |   |   |   |   |   |   |   |   |   |         W  R  P -   move ship up / rotate ship / pause
+  5 |   |   |   |   |   |   |   |   |   |   |      A  S  D    -   move ship left / down / right
+  6 |   |   |   |   |   |   |   |   |   |   |      [Space]    -   place ship (red ship is not placeable)
+  7 |   |   |   |   |   |   |   |   |   |   |
+  8 |   |   |   |   |   |   |   |   |   |   |
+  9 |   |   |   |   |   |   |   |   |   |   |
+ 10 |   |   |   |   |   |   |   |   |   |   |
+Unnamed Player - Place Ships
+    | a | b | c | d | e | f | g | h | i | j |
+  1 |   |   |   |   |   |   |   |   |   |   |
+  2 |   |   | B | B | B | B | B |   |   |   |      Ship Placement Control:
+  3 |   |   |   |   |   |   |   |   |   |   |
+  4 |   |   |   |   |   |   |   |   |   |   |         W  R  P -   move ship up / rotate ship / pause
+  5 |   |   |   |   |   |   |   |   |   |   |      A  S  D    -   move ship left / down / right
+  6 |   |   |   |   |   |   |   |   |   |   |      [Space]    -   place ship (red ship is not placeable)
+  7 |   |   |   |   |   |   |   |   |   |   |
+  8 |   |   |   |   |   |   |   |   |   |   |
+  9 |   |   |   |   |   |   |   |   |   |   |
+ 10 |   |   |   |   |   |   |   |   |   |   |
+Unnamed Player - Place Ships
+  1 |   |   | B | B | B | B | B |   |   |   |
+  2 |   |   |   |   |   |   |   |   |   |   |      Ship Placement Control:
+  3 |   |   |   |   |   |   |   |   |   |   |
+  4 |   |   |   |   |   |   |   |   |   |   |         W  R  P -   move ship up / rotate ship / pause
+  5 |   |   |   |   |   |   |   |   |   |   |      A  S  D    -   move ship left / down / right
+  6 |   |   |   |   |   |   |   |   |   |   |      [Space]    -   place ship (red ship is not placeable)
+  7 |   |   |   |   |   |   |   |   |   |   |
+  8 |   |   |   |   |   |   |   |   |   |   |
+  9 |   |   |   |   |   |   |   |   |   |   |
+ 10 |   |   |   |   |   |   |   |   |   |   |
+...Unnamed Player - Shoot Square
+    | a | b | c | d | e | f | g | h | i | j |
+  1 |[-]|   |   |   |   |   |   |   |   |   |
+  2 |   |   |   |   |   |   |   |   |   |   |      Shooting Cursor Control:
+  3 |   |   |   |   |   |   |   |   |   |   |
+  4 |   |   |   |   |   |   |   |   |   |   |      Q  W     P -   show ship view / cursor up / pause
+  5 |   |   |   |   |   |   |   |   |   |   |      A  S  D    -   move cursor left / down / right
+  6 |   |   |   |   |   |   |   |   |   |   |      [Space]    -   shoot at square
+  7 |   |   |   |   |   |   |   |   |   |   |
+  8 |   |   |   |   |   |   |   |   |   |   |
+  9 |   |   |   |   |   |   |   |   |   |   |
+ 10 |   |   |   |   |   |   |   |   |   |   |
+.......
+----------------------------------------------------------------------
+Ran 25 tests in 15.638s
+
+OK
+PS D:\Documents D\Coding\Python\DHBW\SchiffeVersenken\Python-Schiffe-Versenken> coverage report
+Name             Stmts   Miss  Cover
+------------------------------------
+game.py            272     90    67%
+player.py          299     75    75%
+ship.py             60     14    77%
+test_game.py       130      0   100%
+test_player.py      96      0   100%
+test_ship.py        19      0   100%
+------------------------------------
+TOTAL              876    179    80%
+PS D:\Documents D\Coding\Python\DHBW\SchiffeVersenken\Python-Schiffe-Versenken> 
