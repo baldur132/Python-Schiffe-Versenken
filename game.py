@@ -420,7 +420,7 @@ class Game:
         if not skip_setup:
             for num, user in enumerate(self.players):
                 self.current_player = num
-                user.place_ships(battleships = 1, cruisers = 0, destroyers = 1, submarines = 0)
+                user.place_ships(battleships = 1, cruisers = 2, destroyers = 3, submarines = 4)
 
                 if user.save_exit:
                     self.save_game()
