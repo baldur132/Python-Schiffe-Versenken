@@ -21,11 +21,11 @@ def captive_space(message = " Press [space] To Continue ", clear_console = False
 #Explanation: the 8 image assets are stored as attributes of the Game class,
 #    as this, in my opinion, is the easiest way to store them in a way which allows
 #    for dynamic and usable access to the different images. The other two (reasonable)
-#    options are to either store them as global variables or in the respective method
-#    they are called in, but ultimately I feel as though both of these options are 
+#    options are to either store them as global variables, or in the respective method
+#    they are called in, but ultimately I feel as though both of these options are
 #    unneccessary work asking for confusion (as well as file specific globals). Considering
 #    the fact that some image assets are used in multiple methods and that the image assets
-#    can be externally changed as attributes (allowing game customization), I believe that 
+#    can be externally changed as attributes (allowing game customization), I believe that
 #    it is justified to leave the image assets as attributes of the Game class.
 class Game:
     """ Game class, creates a battleship instance """
