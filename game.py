@@ -18,7 +18,7 @@ def captive_space(message = " Press [space] To Continue ", clear_console = False
     keyboard.press(0x0E)
 class Game:
     """ Game class, creates a battleship instance """
-    def __init__(self):
+    def __init__(self) -> object:
         """
         Game constructor
         :param num: number of players
@@ -530,9 +530,4 @@ class Game:
         """ Alias for display_titlecard, starts game menu """
         self.display_titlecard()
 
-if __name__ == "__main__":
-    newgame = Game()
-    #newgame.draw_selection(box_options = ["Ente", "quack"])
-    newgame.start()
-    #newgame.setup_game()
-    #newgame.resume_game()
+

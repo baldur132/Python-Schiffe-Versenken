@@ -520,13 +520,4 @@ class AI(Player):
                 orient = bool(random.getrandbits(1))
                 value = shipper.place(pos = pos, orient = orient, ships = self.ships, board_size = self.board_size)
 
-if __name__ == "__main__":
-    #testtarget = Human(player_name = "Cannon Fodder")
-    testplayer = Human(player_name = "Player One")
-    #testplayer.target = testtarget
-    #testplayer.ships["Battleships"] = [ship.Battleship()]
-    #testplayer.ships["Battleships"][0].place([5,4], True, ships=testplayer.ships)
-    #testtarget.place_ships()
 
-    testplayer.print_battlefield(mode = "none")
-    #testplayer.captive_pause()
