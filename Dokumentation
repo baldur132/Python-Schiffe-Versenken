@@ -22,7 +22,7 @@ Beschreibung des Dateiformats zum Speichern des Spiels:
 •	Gespeicherter Spielstand einfügen
 Um den Spielstand zu speichern benutzen wir die serialisierte Ausgabe von dem pickle Python modul. Dabei wird das Game
 Objekt in einem byte Stream serialisiert und einfach ein einer Datei gespeichert. Um dem Spielstand wieder zu laden
-wird dieser byte Stream einfach mit deim pickle modul wieder eingelesen und die wesentlichen Attributen importiert.
+wird dieser byte Stream einfach mit dem pickle modul wieder eingelesen und die wesentlichen Attribute importiert.
 
 Beschreibung des Benutzerinterfaces:
 Zu Beginn des Spiels wird eine Abfrage gestartet ob man ein neues Spiel starten, das angefangene Spiel weiterspielen
@@ -34,8 +34,8 @@ unten und D nach rechts verschieben. Die Taste R rotiert das Schiff und mit der 
 Wenn nun alle Schiffe gesetzt wurden und das Spiel bis zum Tode beginnt lässt sich wieder das Muster der Steuerung
 erkennen und der Schuss wird wie gewohnt mit W, A, S, D bewegt und mit der Leertaste endgültig bestätigt. In dieser
 phase kann man auch die Q taste benutzen um seine eigenen Schiffe anzuschauen.
-Während dem Spiel kann man zu fast jeder zeit die P Taste drücken um dem Pause Menü hochzubringen. Innerhalb des Menüs
-kann man mit dem 1 2 3 Tasten eine Option auswählen und mit Leertaste bestätigen. 
+Während dem Spiel kann man zu fast jeder Zeit die P Taste drücken um das Pause Menü hochzubringen. Innerhalb des Menüs
+kann man mit den 1 2 3 Tasten eine Option auswählen und mit der Leertaste bestätigen.
 
 Beschreibung der Architektur:
 Insgesamt gibt es 3 große Klassen Game, Ship und Player. Die Klasse Player besitzt zwei wichtige Unterklassen Human und
@@ -58,11 +58,11 @@ gibt es zwei wichtige Methoden place und get_hits. Place schaut ob ein Schiff pl
 dann auf dem Spielbrett wenn es nicht auf einen anderen Schiff aufliegt und komplett auf dem Brett ist. Die Methode get_hits
 prüft ab, ob ein Schuss sein Schiff Objekt trifft oder nicht. 
 Die Klasse Game ist zuständig für den gesamten Spielablauf. Es steuert das ganze Menüsystem und regelt den Spielablauf. 
-In Game wird ein Spiel erstellt, geladen oder fortgesetzt und ist dabei das Kleber des ganzen Spiels.
+In Game wird ein Spiel erstellt, geladen oder fortgesetzt und ist dabei das Herz des ganzen Spiels.
 
 Beschreibung des Computergegners (4er Gruppen):
 Der Computergegner ist ein Spieler der seine Schiffe zufällig auf dem Spielfeld platziert sowie er auch zufällig seine
-Schüsse abgibt, jedoch ohne das es mehrmals auf das gleiche Feld schießt.
+Schüsse abgibt, jedoch ohne das er mehrmals auf das gleiche Feld schießt.
 
 Dokumentation von einem kompletten Spielablauf:
 Datei anbei als spielablauf.txt.
@@ -100,14 +100,14 @@ für game.py nicht zu erreichen. Die testbaren Methoden wurden aber mit umfangre
 
 Bewertung der Fehlersicherheit:
 •	Werden Fehleingaben korrekt abgefangen?
-Fehleingaben sind in dem Programm im ersten Sinne dadurch verhindert, das die eingabe Möglichkeiten eingeschränkt sind.
-Benutzer können mit dem interface nur mit WASD sowie einige andere tasten mit dem Spiel interagieren. Dabei sind aber nicht
+Fehleingaben sind in dem Programm im ersten Sinne dadurch verhindert, das die Eingabe Möglichkeiten eingeschränkt sind.
+Benutzer können mit dem Interface nur mit WASD sowie einige andere Tasten mit dem Spiel interagieren. Dabei sind aber nicht
 alle Fehlermöglichkeiten ausgeschlossen. Es muss sicher gestellt werden das der Cursor bzw. das Schiff nicht aus dem Feld
-Rausbewegt werden darf. Für die Schiffplatzierung sind zwei Sicherheitsstufen implementiert: zum einen die Callback Funktion
+rausbewegt werden darf. Für die Schiffplatzierung sind zwei Sicherheitsstufen implementiert: zum einen die Callback Funktion
 verhindert das die Schiffe aus dem Spielfeld gedrückt werden dürfen, und zum anderen berechnet auch die place() Funktion in
 der Ship Klasse ob die Position des Schiffes valide ist. Für den Schusscursor ist nur in der Callback Funktion einen Check
 der sichert, das der Cursor sich im Spielfeld befindet. Innerhalb von draw_selections (routine die die Menüs darstellt) ist 
-auch ein Check der verhindert, das die selection_pointer Attribute größer ist als die anzahl der gegebenen Optionen.
+auch ein Check der verhindert, das die selection_pointer Attribute größer ist als die Anzahl der gegebenen Optionen.
     ◦	Nenne 2 Beispiele wo ein Fehler abgefangen wird
          - Während der Schiffbewegung
          - Beim Aufbau der Menüoptionen
@@ -143,11 +143,11 @@ Es sind noch 3 pylint Kommentare vorhanden:
 Die Begründungen sind jeweils vor jeder Zeile zu finden, auf Englisch.
 
 •	Begründet warum euer Code gut lesbar ist
-Das gesamte Modul ist fast zu 100% im objektorientiertem Stil programmiert. Dabei würde immer inbetracht gehalten,
+Das gesamte Modul ist fast zu 100% im objektorientiertem Stil programmiert. Dabei wurde immer inbetracht gezogen,
 dass die Bezeichnungen für die jeweiligen Attributen und Methoden logisch nachvollziebar sind. Sonst ist die Stuktur
 vom Programm relativ einfach gehalten, welches zum Verständis stark beiträgt. Methoden sind nach ihrer Funktion
 gruppiert, callback funktionen sowie zusammenhängende Unterfunktionen sind über ihrer Oberfunktion geordnet. Dabei
-ist es einfach nachzuvollziehen welches code welches aufruft. 
+ist es einfach nachzuvollziehen welcher Code welchen aufruft.
 
 Bewertungstabelle:
 •	Ausgefüllte Bewertungstabelle
