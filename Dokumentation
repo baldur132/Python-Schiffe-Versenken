@@ -1,0 +1,114 @@
+Python - Programmentwurf
+
+Team Mitglieder:
+Name	        e-Mail (DHBW)
+Baldur Siegel 	siegel.baldur-it20@it.dhbw-ravensburg.de
+Jonas Straub	straub.jonas-it20@it.dhbw-ravensburg.de
+Samuel Amann	amann.samuel-it20@it.dhbw-ravensburg.de
+Lukas Lutz	    lutz.lukas-it20@it.dhbw-ravensburg.de
+
+Verwendete Python Version: Python 3.9.1
+Verwendete Pylint Version: Pylint 2.6.0
+Verwendete nachinstallierte Bibliotheken: Keyboard
+
+Probleme:
+Unter Mac Os muss die main.py Funktion außerhalb von Pycharm/VSCodium… im Terminal mit dem sudo Befehl gestartet werden,
+da Mac Os die Tastendrücke abfängt und so das Spiel nicht gespielt werden kann. Unter jedem System hat Pycharm das
+Problem den Befehl os.get_terminal_width() nicht ausführen zu können, da Pycharm kein richtiges Terminal sondern ein
+embedded terminal emulator verwendet und so die Größe nicht festgestellt werden kann.
+
+Beschreibung des Dateiformats zum Speichern des Spiels:
+•	Gespeicherter Spielstand einfügen
+Um den Spielstand zu speichern benutzen wir das Dateiformat JSON, ein Datenaustauschformat das für uns Menschen einfach
+zu lesen und schreiben und für Maschinen einfach zu analysieren und generieren ist. Bei JSON handelt es sich um ein
+Textformat das komplett unabhängig von Programmiersprachen ist weshalb viele Programmierer aus der Familie der
+C-basierten Sprache (inclusive C, C++, C#, Java, Python und anderen) es gerne benutzt wird.
+
+Beschreibung des Benutzerinterfaces:
+Zu Beginn des Spiels wird eine Abfrage gestartet ob man ein neues Spiel starten, das angefangene Spiel weiterspielen
+oder das Programm beenden will. Um hier durch zu navigieren werden die Tasten A für links, D für rechts und die
+Leertaste um die Eingabe zu bestätigen genutzt. Wenn ein neues Spiel beginnen gewählt wird öffnet sich ein Untermenü
+mit Single Player oder 1v1 und Zurück welches sich auch mit A, D navigieren lässt. Grundlegend wird danach mit
+W, A, S, D navigiert, wenn man nun das Spiel beginnt lassen sich die Schiffe mit W nach oben, A nach links, S nach
+unten und D nach rechts verschieben. Die Taste R rotiert das Schiff und mit der Leertaste wird wieder bestätigt.
+Wenn nun alle Schiffe gesetzt wurden und das Spiel bis zum Tode beginnt lässt sich wieder das Muster der Steuerung
+erkennen und der Schuss wird wie gewohnt mit W, A, S, D bewegt und mit der Leertaste endgültig bestätigt.
+
+Beschreibung der Architektur:
+Insgesamt gibt es 3 große Klassen Game, Ship und Player. Die Klasse Player besitzt zwei wichtige Unterklassen Human und
+Ai. Diese haben zwei fast identische Methoden da sie diese brauchen einmal shoot und place-ships. Place-ships
+platziert am Anfang die Schiffe, das ist aber bei beiden unterschiedlich da die Methode Ai die Schiffe zufällig setzt.
+Bei Human ist das wesentlich anders die Methode capture input place fängt die Keyboardtasten ab und ruft die Methode
+draw-place-ship auf und bewegt dann aktiv das Schiff. Dadurch wiederrum wird die Klasse ship aufgerufen und ruft
+print-battlefield auf um zu sehen wo das Schiff ist und wie man es auf dem Spielfeld bewegt. In Ai sucht die Methode
+shoot ein zufälliges Feld aus und stellt auch gleichzeitig fest dass nicht ein Feld zweimal beschossen wird. Danach
+ruft diese die Methode get shot vom Gegner auf und man gibt die Position an wohin man schießen will und gibt auch
+gleich die Felder mit wo man schon beschossen hat. Die Methode Shooting rage speichert alle Felder wo schon beschossen
+wurden. Bei Human ist die shoot Methode relativ identisch. Bei shoot muss abgefragt werden wohin geschossen werden
+will diese ruft dann get shoot als erstes auf und der Spieler gibt an wohin geschossen werden soll. Die Klasse Ship
+stellt das Schiff dar und hat auch die Attribute gespeichert und erstellt dann ein Objekt damit. Für die Klasse Ship
+gibt es zwei wichtige Methoden place und get hits. Place schaut ob ein Schiff platziert werden darf und platziert es
+dann auf dem Spielbrett wenn nicht wird es rot markiert und kann auch nicht platziert werden. Die Methode get-hits
+prüft ob ein Schuss ein Schiff trifft oder nicht. Die Klasse Game ist zuständig für den gesamten Spielablauf. Es
+startet das Spiel und steuert das ganze Menüsystem. In Game wird ein Spiel erstellt, geladen oder fortgesetzt es ist
+das Herzstück des ganzen Spiels.
+
+Beschreibung des Computergegners (4er Gruppen):
+Der Computergegner ist ein Spieler der seine Schiffe zufällig auf dem Spielfeld platziert sowie er auch zufällig seine
+Schüsse abgibt.
+
+Dokumentation von einem kompletten Spielablauf:
+Datei anbei als spielablauf.txt.
+
+Log von den Tests:
+test_player.py:
+test_ship.py:
+
+
+Bewertung der Testergebnisse:
+•	Grund für fehlschlagende Tests
+
+
+Code-Coverage Ausgabe:
+•	Tests mit Coverage ausführen und Ausgabe hier einfügen
+
+
+Bewertung der Coverage und Sinnvollheit der Tests:
+•	Gewünscht ist eine Coverage von min 75%
+◦	Wurde dies erreicht? Wenn nein, warum nicht?
+•	Begründet warum ihr euch sicher seid alles mit Tests abgedeckt zu haben
+•	Fehlerfälle in den Tests überprüft?
+
+
+Bewertung der Fehlersicherheit:
+•	Werden Fehleingaben korrekt abgefangen?
+◦	Nenne 2 Beispiele wo ein Fehler abgefangen wird
+
+
+Pylint Ausgabe:
+Game.py:
+game.py:19:0: R0902: Too many instance attributes (14/7) (too-many-instance-attributes)
+------------------------------------------------------------------
+Your code has been rated at 9.96/10 (previous run: 9.96/10, +0.00)
+
+Player.py:
+player.py:204:4: R0913: Too many arguments (6/5) (too-many-arguments)
+------------------------------------------------------------------
+Your code has been rated at 9.97/10 (previous run: 9.97/10, +0.00)
+
+Ship.py:
+ship.py:29:4: R0913: Too many arguments (6/5) (too-many-arguments)
+------------------------------------------------------------------
+Your code has been rated at 9.83/10 (previous run: 9.83/10, +0.00)
+Main.py:
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+Bewertung der Code-Qualität/Lesbarkeit:
+•	Begründet noch vorhandene Pylint Warnungen
+•	Begründet warum euer Code gut lesbar ist
+
+
+Bewertungstabelle:
+•	Ausgefüllte Bewertungstabelle
+
