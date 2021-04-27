@@ -17,6 +17,15 @@ class Ship:
         self.sunken = False
         self.placed = False
 
+    #Pylint Comment: Too many arguments (6/5)
+    #Explanation: The first 4 parameters are necessary to be able to place the ship at a
+    #    certain location, as well as being able to calculate ship collisions with other
+    #    ships, as well as with the edge of the board. The last paramter, test, was
+    #    added to be able to check if the placement position of the ship is valid without
+    #    automatically placing the ship. This expands the usage of the place() method
+    #    greatly, and prevents code from having to be copied, as a second method to
+    #    test the placement of a ship would ultimately be identical to the current place()
+    #    method. Thus I believe that the usage of the extra parameter is justified
     def place(self, pos = None, orient = None, ships = None, board_size = 10, test = False):
         """
         places ships on board by setting their internal position values and/or checks placement validity

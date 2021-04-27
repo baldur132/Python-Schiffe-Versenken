@@ -34,9 +34,7 @@ def two_wait(hotkey_a = None, hotkey_b = None, suppress = False, trigger_on_rele
             _time.sleep(1e6)
 
 def clear_console():
-    """
-    clears console
-    """
+    """ clears console based on os type """
     os.system('cls' if os.name=='nt' else 'clear')
 
 class Player:
@@ -194,6 +192,15 @@ class Player:
 
         return segment
 
+    # Pylint Comment: Too many arguments (6/5)
+    # Explanation: Each of the parameters has a specific function, and uses/expects different data/data
+    #     structures. Attempting to split these up between different functions or grouping parameters
+    #     would only cause the code to be less readable, as well as making the draw function more difficult
+    #     to implement and use as a result. Using a central function to draw the game board is a better alternative
+    #     to having multiple functions doing more or less the same thing. Therefore, having one function
+    #     drawing the game board allows for easier debugging as well as having a more centralized program
+    #     structure. This is by no means a 'god function' as it has one purpose, to draw the game board with
+    #     different internal values / elements. I believe that the amount of paramters is justified
     def print_battlefield(self, mode = "none", title = None, aside = None, overlay = None, cursor = None):
         """
         Prints the player's own ships on the battlefield
@@ -519,14 +526,3 @@ class AI(Player):
                 pos = [random.randint(0, self.board_size - 1), random.randint(0, self.board_size - 1)]
                 orient = bool(random.getrandbits(1))
                 value = shipper.place(pos = pos, orient = orient, ships = self.ships, board_size = self.board_size)
-
-if __name__ == "__main__":
-    #testtarget = Human(player_name = "Cannon Fodder")
-    testplayer = Human(player_name = "Player One")
-    #testplayer.target = testtarget
-    #testplayer.ships["Battleships"] = [ship.Battleship()]
-    #testplayer.ships["Battleships"][0].place([5,4], True, ships=testplayer.ships)
-    #testtarget.place_ships()
-
-    testplayer.print_battlefield(mode = "none")
-    #testplayer.captive_pause()
