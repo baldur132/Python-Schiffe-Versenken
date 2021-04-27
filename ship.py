@@ -54,11 +54,11 @@ class Ship:
                         return False #f"head collision at { nextpos_x } { nextpos_y }"
                     if shipper.orientation:
                         #check for body collisions on vertically oriented shipper
-                        if nextpos_x == shipper.position[0] and nextpos_y < shipper.position[1] + shipper.length and nextpos_y >= shipper.position[1]:
+                        if nextpos_x == shipper.position[0] and shipper.position[1] <= nextpos_y < shipper.position[1] + shipper.length:
                             #ship intersects with another vertically oriented one
                             return False #f"vertical body collision at { nextpos_x } { nextpos_y }"
                     else:
-                        if nextpos_y == shipper.position[1] and nextpos_x < shipper.position[0] + shipper.length and nextpos_x >= shipper.position[0]:
+                        if nextpos_y == shipper.position[1] and nextpos_x >= shipper.position[0] <= nextpos_x < shipper.position[0] + shipper.length:
                         #check for body collisions on horizontially oriented shipper
                             #ship intersects with with another differently oriented one
                             return False#f"Horizontal body collision at { nextpos_x } { nextpos_y }"
