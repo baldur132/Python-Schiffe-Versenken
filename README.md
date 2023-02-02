@@ -1,4 +1,5 @@
 # Python-Schiffe-Versenken
+
 ***Gruppe 1*** <br>
 Schiffe Verseken in Python mit einem Command Line Interface
 
@@ -7,9 +8,32 @@ Schiffe Verseken in Python mit einem Command Line Interface
  - Interaktion durch CLI
  - Singerplayer mit Computer Gegener
  - 2 Spieler Multiplayer
- - Automatisches Speichern in einer Datei
-## Spielregeln: 
+ - Speichern des Spielstands
+
+## Installieren
+
+Diese Implementation benötigt mind. [Python 3.9](https://www.python.org/downloads/) und als Dependency die [keyboard](https://pypi.org/project/keyboard/) library.
+
+```
+pip install keyboard
+```
+
+Die Applikation kann dann geklont und mit der `main.py` gestartet werden.
+
+```
+git clone https://github.com/baldur132/Python-Schiffe-Versenken.git
+cd Python-Schiffe-Versenken
+python main.py
+
+Linux:
+python3 main.py
+```
+
+
+## Spielregeln:
+
 ### Vorbereitung
+
  1. Die Schiffe dürfen nicht aneinander stoßen.
  2. Die Schiffe dürfen nicht über Eck gebaut sein oder Ausbuchtungen besitzen.
  3. Die Schiffe dürfen auch am Rand liegen.
@@ -21,6 +45,7 @@ Schiffe Verseken in Python mit einem Command Line Interface
      - vier U-Boote (je 2 Kästchen)
 
 ### Spielverlauf
+
  - Der *Schießende* gibt eine Koordinate an, an der er feuert
  - Der *Beschossense* sieht auf seinem Brett und antwortet *Wasser*, *Treffer* oder *versenkt*
  - Ein Schiff gilt als *versenkt*, wenn alle Felder des Schiffes getroffen wurden
